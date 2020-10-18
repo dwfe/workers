@@ -1,0 +1,11 @@
+{
+  "name": "dwfe-test-workers",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "bootstrap": "lerna bootstrap --hoist"
+  },
+  "devDependencies": {
+    "lerna": "3"
+  }
+}
