@@ -1,0 +1,17 @@
+{
+  "name": "@dwfe/test-workers-core",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "typings": "./dist/types",
+  "scripts": {
+    "build": "tsc -b",
+    "build watch": "tsc -b -w"
+  },
+  "devDependencies": {
+    "@types/node": "12",
+    "typescript": "3",
+    "rxjs": "6"
+  },
+  "dependencies": {}
+}
