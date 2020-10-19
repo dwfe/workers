@@ -1,3 +1,3 @@
-export * from './data-hadler'
+export * from './data-handler'
 export * from './exchanger'
 export * from './worker'

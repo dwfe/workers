@@ -1,7 +1,7 @@
-import {IWorkerPostData} from 'data-hadler';
+import {IWorkerPostData} from '../worker';
 
-export interface IWorkerExchanger {
-  read(data: any): any;
+export interface IWorkerExchanger<TReadResult = any, TWriteData = any, TMessage = any> {
+  read(e: MessageEvent): TReadResult;
 
-  write(data: any): IWorkerPostData;
+  write(data: TWriteData): IWorkerPostData<TMessage>;
 }

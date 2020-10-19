@@ -1,14 +1,17 @@
 import {IWorkerExchanger} from './contract';
-import {IWorkerPostData} from '../data-hadler';
+import {IWorkerPostData} from '../worker';
 
 export class StructuredCloneExchanger implements IWorkerExchanger {
 
-  read(data) {
-    return data;
+  read(e: MessageEvent) {
+    return e.data; // do nothing
   }
 
   write(data): IWorkerPostData {
-    return data;
+    return {
+      message: data, // do nothing
+      transfer: []
+    };
   }
 
 }
