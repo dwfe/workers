@@ -1,3 +1,5 @@
+export type ContextType = Worker | DedicatedWorkerGlobalScope;
+
 export interface IMessagePost<TData = any> {
   message: TData;
   transfer: Transferable[];

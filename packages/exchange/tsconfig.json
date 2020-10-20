@@ -3,6 +3,9 @@
   "compilerOptions": {
     "declarationDir": "./dist/types",
     "outDir": "./dist",
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    "lib": [
+      "webworker"
+    ]
   }
 }

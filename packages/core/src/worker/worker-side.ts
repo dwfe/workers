@@ -2,27 +2,28 @@ import {fromEvent, merge} from 'rxjs'
 import {map, mapTo, tap} from 'rxjs/operators'
 import {IWorkerDataConverter} from '../converter'
 import {IWorkerDataHandler} from '../handler'
+import {ContextType} from './contract';
 
-export class WorkerEngine<TEvent = any, TProcessing = any, TWrite = any, TPost = any> {
+export class WorkerSide<TEvent = any, TProcessing = any, TWrite = any, TPost = any> {
 
   constructor(protected converter: IWorkerDataConverter<TEvent, TProcessing, TWrite, TPost>,
               protected handler: IWorkerDataHandler<TProcessing, TWrite>,
-              protected context: DedicatedWorkerGlobalScope | Worker = (self as DedicatedWorkerGlobalScope)) {
+              protected ctx: ContextType) {
   }
 
-  private incomingData$ = fromEvent<MessageEvent>(this.context, 'message').pipe(
+  private in$ = fromEvent<MessageEvent>(this.ctx, 'message').pipe(
     map(e => this.converter.read(e)), // TEvent -> TProcessing
     tap(data => this.handler.processing(data)),
   );
 
-  private outgoingData$ = this.handler.send$.pipe(
+  private out$ = this.handler.send$.pipe(
     map(d1 => this.converter.write(d1)), // TWrite -> TPost
-    tap(d => this.context.postMessage(d.message, d.transfer)),
+    tap(d => this.ctx.postMessage(d.message, d.transfer)),
   );
 
   run$ = merge(
-    this.incomingData$,
-    this.outgoingData$,
+    this.in$,
+    this.out$,
   ).pipe(
     mapTo(null)
   );
