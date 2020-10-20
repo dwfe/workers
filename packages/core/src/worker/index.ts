@@ -1,2 +1,4 @@
 export * from './contract'
-export * from './web-worker'
+export * from './worker-engine'
+export * from './worker-self'
+export * from './worker-wrap'
