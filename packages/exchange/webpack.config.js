@@ -1,27 +1,8 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const fs = require('fs-extra')
+const copyFilesOfWorkers = require('./src/webpack/copying-workers')
 const path = require('path')
 const SRC_DIR = path.resolve(__dirname, 'src')
 const DIST_DIR = path.resolve(__dirname, 'dist')
-
-
-const filesOfWorkersFromToMap = new Map([
-  ['../worker-side-bundles/dist/worker123.js', './dist/worker123.js']
-])
-const copyFilesOfWorkers = compiler => {
-  console.log(`==========================\r\n Copying files of workers\r\n==========================`,)
-  filesOfWorkersFromToMap.forEach((to, from) => {
-    try {
-      console.log(` > copy '${from}' -> '${to}'`,)
-      fs.copySync(from, to)
-    } catch (e) {
-      console.error(e)
-    }
-    console.log(` > copy done!`,)
-  })
-  console.log(`==========================\r\n`,)
-}
-
 
 module.exports = {
   entry: path.join(SRC_DIR, 'index.ts'),
@@ -45,7 +26,7 @@ module.exports = {
   plugins: [
     {
       apply: compiler => {
-        compiler.hooks.watchRun.tap('Copying files of workers', copyFilesOfWorkers)
+        compiler.hooks.watchRun.tap('Copy files of workers', copyFilesOfWorkers)
       }
     },
     new HtmlWebpackPlugin({
