@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "bootstrap": "lerna bootstrap --hoist"
+    "bootstrap": "lerna bootstrap --hoist",
+    "clean:dist": "lerna run clean",
+    "lerna clean & build": "npm run clean:dist && lerna run build"
   },
   "devDependencies": {
     "lerna": "3"

@@ -1,9 +1,14 @@
 import {WorkerSide, StructuredCloneConverter} from '@dwfe/test-workers-core';
-import {DataHandlerMain} from './worker';
+import {DataHandlerMain} from './worker-side';
 
-console.log(`hello`,)
-const worker = new Worker('./worker.js')
-// const handler = new DataHandlerMain()
-// const mainSide = new WorkerSide(new StructuredCloneConverter(), handler, worker)
-// mainSide.run$.subscribe();
-// handler.send({hello: 'world'})
+const worker = new Worker('./worker123.js');
+
+const handler = new DataHandlerMain()
+const mainSide = new WorkerSide('main  ', new StructuredCloneConverter(), handler, worker)
+handler.send({hello: 'world123'})
+
+setTimeout(()=> {
+  mainSide.stop()
+  // worker.terminate()
+  console.log(`main side stoppped`, )
+},4000)

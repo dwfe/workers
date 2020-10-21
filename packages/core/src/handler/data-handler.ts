@@ -1,4 +1,5 @@
 import {Subject} from 'rxjs';
+import {distinctUntilChanged, shareReplay} from 'rxjs/operators'
 import {IWorkerDataHandler} from './contract';
 
 export abstract class DataHandler<TProcess = any, TWrite = any> implements IWorkerDataHandler<TProcess, TWrite> {
@@ -11,6 +12,9 @@ export abstract class DataHandler<TProcess = any, TWrite = any> implements IWork
     this.sendSubj.next(data);
   }
 
-  send$ = this.sendSubj.asObservable();
+  send$ = this.sendSubj.asObservable().pipe(
+    distinctUntilChanged(),
+    shareReplay(1),
+  );
 
 }

@@ -1,10 +1,10 @@
-import {DataHandler} from '@dwfe/test-workers-core';
+import { DataHandler } from "@dwfe/test-workers-core";
 
 export class DataHandlerWorker extends DataHandler {
 
   processing(data: any) {
     console.log(`worker processing`, data)
-    this.send({world: 'hello'})
+    this.send({...data, time: +new Date()})
   }
 
 }
