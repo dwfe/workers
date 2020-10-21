@@ -1,23 +1,19 @@
-import {fromEvent, merge, Subscription} from 'rxjs'
-import {map, mapTo, tap, skip} from 'rxjs/operators'
-import {IWorkerDataConverter} from '../converter'
-import {IWorkerDataHandler} from '../handler'
-import {ContextType} from './contract';
+import {fromEvent, merge, Subject} from 'rxjs'
+import {map, mapTo, takeUntil, tap} from 'rxjs/operators'
+import {ContextType, IDataConverter, IDataHandler} from './contract';
 
 export class WorkerSide<TEvent = any, TProcessing = any, TWrite = any, TPost = any> {
-  private stopSubscription: Subscription;
+
+  private stopper = new Subject();
 
   constructor(protected name: string,
-              protected converter: IWorkerDataConverter<TEvent, TProcessing, TWrite, TPost>,
-              protected handler: IWorkerDataHandler<TProcessing, TWrite>,
+              protected converter: IDataConverter<TEvent, TProcessing, TWrite, TPost>,
+              protected handler: IDataHandler<TProcessing, TWrite>,
               protected ctx: ContextType) {
-    this.stopSubscription = this.start$.subscribe();
-    // this.ctx.onmessage = (e)=> {console.log(`${this.name} listener`, e['data'])}
+    this.start$.subscribe();
   }
 
   private in$ = fromEvent<MessageEvent>(this.ctx, 'message').pipe(
-    // tap(data => console.log(`${this.name}: in$`, data.data)),
-    // skip(1),
     tap(data => console.log(`${this.name}: converter.read`, data.data)),
     map(e => this.converter.read(e)), // TEvent -> TProcessing
     tap(data => this.handler.processing(data)),
@@ -29,15 +25,17 @@ export class WorkerSide<TEvent = any, TProcessing = any, TWrite = any, TPost = a
     tap(d => this.ctx.postMessage(d.message, d.transfer)),
   );
 
-  start$ = merge(
+  private start$ = merge(
     this.in$,
     this.out$,
   ).pipe(
+    takeUntil(this.stopper.asObservable()),
     mapTo(null)
   );
 
   stop() {
-    this.stopSubscription.unsubscribe()
+    this.stopper.next();
+    this.stopper.complete();
   }
 
 }
