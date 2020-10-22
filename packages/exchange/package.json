@@ -5,15 +5,15 @@
   "main": "./dist/index.js",
   "typings": "./dist/types",
   "scripts": {
+    "clean": "rimraf ./dist",
     "build": "tsc -b",
     "build watch": "tsc -b -w",
-    "start": "webpack-dev-server --mode development --port 4277 --open",
-    "clean": "rimraf ./dist"
+    "webpack:dev": "npm run clean && webpack --mode development",
+    "start": "npm run clean && webpack-dev-server --mode development --port 4277 --open"
   },
   "devDependencies": {
     "@types/node": "12",
     "@dwfe/test-workers-core": "*",
-    "@dwfe/test-workers-worker-bundles": "*",
     "typescript": "3",
     "@types/webpack": "4",
     "webpack": "4",

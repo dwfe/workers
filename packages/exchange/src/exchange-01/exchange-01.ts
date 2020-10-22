@@ -18,10 +18,10 @@ export class Exchange01 {
 
     this.handlerMain.send({hello: 'world123'});
 
-    setTimeout(() => {
-      this.stop();
-      console.log(`= exchange 01 stoppped`,)
-    }, 4000)
+    // setTimeout(() => {
+    //   this.stop();
+    //   console.log(`= exchange 01 stoppped`,)
+    // }, 4000)
   }
 
   stop() {
