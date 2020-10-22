@@ -15,6 +15,7 @@
     "@dwfe/test-workers-core": "*",
     "@dwfe/test-workers-worker-bundles": "*",
     "typescript": "3",
+    "@types/webpack": "4",
     "webpack": "4",
     "webpack-cli": "3",
     "webpack-dev-server": "3",

@@ -3,7 +3,7 @@ const SRC_DIR = path.resolve(__dirname, 'src')
 const DIST_DIR = path.resolve(__dirname, 'dist')
 
 module.exports = {
-  entry: path.join(SRC_DIR, 'worker123.ts'),
+  entry: path.join(SRC_DIR, 'worker-side-01/index.ts'),
   devtool: 'inline-source-map',
   module: {
     rules: [
@@ -16,7 +16,7 @@ module.exports = {
   },
   output: {
     path: DIST_DIR,
-    filename: 'worker123.js',
+    filename: 'worker-side-01.js',
     //libraryTarget: 'umd'
   },
   resolve: {

@@ -1,10 +1,10 @@
 const fs = require('fs-extra')
 
 const fromTo = new Map([
-  ['../worker-bundles/dist/worker123.js', './dist/worker123.js']
+  ['../worker-bundles/dist/worker-side-01.js', './dist/worker-side-01.js']
 ])
 
-function copyFilesOfWorkers(compiler) {
+function copyFilesOfWorkers() {
   console.log(`==========================\r\n Copying files of workers\r\n==========================`,)
   fromTo.forEach((to, from) => {
     try {

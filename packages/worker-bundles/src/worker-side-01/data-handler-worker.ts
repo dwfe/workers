@@ -1,4 +1,4 @@
-import { DataHandler } from "@dwfe/test-workers-core";
+import {DataHandler} from '@dwfe/test-workers-core';
 
 export class DataHandlerWorker extends DataHandler {
 
