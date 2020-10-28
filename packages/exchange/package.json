@@ -9,7 +9,7 @@
     "build": "tsc -b",
     "build watch": "tsc -b -w",
     "webpack:dev": "npm run clean && webpack --mode development",
-    "start": "npm run clean && webpack-dev-server --mode development --port 4277 --open"
+    "start": "webpack-dev-server --mode development --port 4277 --open"
   },
   "devDependencies": {
     "@types/node": "12",

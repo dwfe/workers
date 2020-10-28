@@ -1,10 +1,11 @@
 import {ContextSide, StructuredCloneConverter} from '@dwfe/test-workers-core'
 import {DataHandlerWorker} from './data-handler-worker'
 
-console.log(`worker run!!1`,)
+const name = 'worker 01'
+console.log(`${name} run!`,)
 
 const handler = new DataHandlerWorker()
-const workerSide = new ContextSide(self, 'worker', new StructuredCloneConverter(), handler)
+const workerSide = new ContextSide(self, name, new StructuredCloneConverter(), handler)
 
 setTimeout(() => {
   handler.send({from: 'worker 3000'})

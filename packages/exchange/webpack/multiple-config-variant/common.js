@@ -21,3 +21,11 @@ module.exports = {
     },
   }
 };
+
+
+// const workerSidesConfig = require('./webpack/multiple-config-variant/worker-sides.config')
+// const runConfig = require('./webpack/multiple-config-variant/run.config')
+// module.exports = [
+//   workerSidesConfig,
+//   runConfig,
+// ];

@@ -25,9 +25,14 @@ export class ContextSide<TRead = any, TProcessing = any, TSend = any, TWrite = a
     tap(d => this.ctx.postMessage(d.message, d.transfer)),
   );
 
+  private error$ = fromEvent<MessageEvent>(this.ctx, 'messageerror').pipe(
+    tap(e => console.log(`${this.name} ContextSide error`, e)),
+  );
+
   private start$ = merge(
     this.in$,
     this.out$,
+    this.error$,
   ).pipe(
     takeUntil(this.stopper.asObservable()),
     mapTo(null)
