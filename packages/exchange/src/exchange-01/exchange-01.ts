@@ -9,7 +9,7 @@ export class Exchange01 {
   private converterMain = new StructuredCloneConverter();
 
   constructor() {
-    this.worker = new Worker('./worker-side-01.js')
+    this.worker = new Worker('./exchange_01_worker_side.233a5f6c077197240361.js')
     this.mainSide = new ContextSide(this.worker, 'main  ', this.converterMain, this.handlerMain)
   }
 

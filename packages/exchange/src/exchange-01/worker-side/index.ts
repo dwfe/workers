@@ -1,6 +1,8 @@
 import {ContextSide, StructuredCloneConverter} from '@dwfe/test-workers-core'
 import {DataHandlerWorker} from './data-handler-worker'
 
+console.log(`worker run!!1`,)
+
 const handler = new DataHandlerWorker()
 const workerSide = new ContextSide(self, 'worker', new StructuredCloneConverter(), handler)
 
