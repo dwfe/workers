@@ -7,7 +7,7 @@
 		<key>Active Layer</key>
 		<string>Default</string>
 		<key>Visible Rect</key>
-		<string>{{0, 0}, {1129, 649}}</string>
+		<string>{{0, 0}, {1129, 684}}</string>
 		<key>Zoom Factor</key>
 		<real>1</real>
 	</dict>
@@ -34,7 +34,7 @@
 		<string>2E02B1F5-A1FE-404C-A055-9B0E48C65B0F</string>
 	</array>
 	<key>Normal Window Layout</key>
-	<string>{{0, 0}, {1366, 745}}</string>
+	<string>{{0, 0}, {1366, 768}}</string>
 	<key>Organizer Visible</key>
 	<true/>
 	<key>Organizer Width</key>
