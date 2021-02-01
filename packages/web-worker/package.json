@@ -1,5 +1,5 @@
 {
-  "name": "@dwfe/test-workers-core",
+  "name": "@dwfe/web-worker",
   "version": "1.0.0",
   "license": "MIT",
   "main": "./dist/index.js",
