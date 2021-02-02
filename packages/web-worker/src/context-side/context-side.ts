@@ -1,46 +1,74 @@
-import {fromEvent, merge, Subject} from 'rxjs'
-import {map, mapTo, takeUntil, tap} from 'rxjs/operators'
-import {ContextType, IDataConverter, IDataHandler} from './contract';
+import {fromEvent, merge, of, Subject} from 'rxjs'
+import {catchError, map, mapTo, takeUntil, tap} from 'rxjs/operators'
+import {ContextType, IConverter, IHandler} from './contract';
 
-export class ContextSide<TRead = any, TProcessing = any, TSend = any, TWrite = any, TPost = any> {
+export class ContextSide<TSend = any, TWrite = any, TPost = any, TRead = any, TProcess = any> {
 
   private stopper = new Subject();
+  private isDebug = false;
 
-  constructor(protected ctx: ContextType,
-              protected name: string,
-              protected converter: IDataConverter<TRead, TProcessing, TWrite, TPost>,
-              protected handler: IDataHandler<TProcessing, TSend, TWrite>) {
+  constructor(public readonly ctx: ContextType,
+              public readonly name: string,
+              public readonly converter: IConverter<TWrite, TPost, TRead, TProcess>,
+              public readonly handler: IHandler<TSend, TWrite, TProcess>) {
     this.start$.subscribe();
   }
 
+  private out$ = this.handler.send$.pipe(
+    tap(d => this.log('to converter.write', d)),
+    map(d => this.converter.write(d)),         // TWrite -> TPost
+    tap(data => this.log('to postMessage', data)),
+    tap(data => this.ctx.postMessage(data.message, data.transfer)),
+  );
+
   private in$ = fromEvent<MessageEvent>(this.ctx, 'message').pipe(
-    tap(e => console.log(`${this.name}: converter.read`, e.data)),
-    map(e => this.converter.read(e)), // TRead -> TProcessing
-    tap(data => this.handler.processing(data)),
+    tap(event => this.log('to converter.read', event.data)),
+    map(event => this.converter.read(event)),  // TRead -> TProcess
+    tap(data => this.log('to process', data)),
+    tap(data => this.handler.process(data)),
   );
 
-  private out$ = this.handler.write$.pipe(
-    tap(d1 => console.log(`${this.name}: converter.write`, d1)),
-    map(d1 => this.converter.write(d1)), // TWrite -> TPost
-    tap(d => this.ctx.postMessage(d.message, d.transfer)),
-  );
-
-  private error$ = fromEvent<MessageEvent>(this.ctx, 'message-error').pipe(
-    tap(e => console.log(`${this.name} ContextSide error`, e)),
+  private error$ = fromEvent<MessageEvent>(this.ctx, 'messageerror').pipe(
+    tap(event => this.error('messageerror', event)),
   );
 
   private start$ = merge(
-    this.in$,
     this.out$,
+    this.in$,
     this.error$,
   ).pipe(
     takeUntil(this.stopper.asObservable()),
+    catchError(err => of(this.error('composition error', err))),
     mapTo(null)
   );
 
   stop() {
-    this.stopper.next();
+    this.stopper.next(true);
     this.stopper.complete();
+    if (this.ctx instanceof Worker) {
+      (this.ctx as Worker).terminate();
+    } else if (this.ctx instanceof DedicatedWorkerGlobalScope) {
+      (this.ctx as DedicatedWorkerGlobalScope).close();
+    }
   }
+
+//region Support
+
+  setDebug(value: boolean) {
+    this.isDebug = value;
+  }
+
+  logPrefix = `ctx[${this.name}]:`;
+
+  log(...args) {
+    if (this.isDebug)
+      console.log(this.logPrefix, ...args);
+  }
+
+  error(...args) {
+    console.error(this.logPrefix, ...args);
+  }
+
+//endregion
 
 }

@@ -3,25 +3,25 @@ import {Observable} from 'rxjs';
 export type ContextType = Worker // для main-контекста
   | DedicatedWorkerGlobalScope;  // для контекста воркера, обычно это self
 
-export interface IMessageEvent<TData = any> extends MessageEvent {
-  data: TData;
-}
-
 export interface IMessagePost<TData = any> {
   message: TData;
   transfer: Transferable[];
 }
 
-export interface IDataConverter<TRead = any, TProcessing = any, TWrite = any, TPost = any> {
-  read(e: IMessageEvent<TRead>): TProcessing;
+export interface IConverter<TWrite = any, TPost = any, TRead = any, TProcess = any> {
 
   write(data: TWrite): IMessagePost<TPost>;
+
+  read(e: MessageEvent<TRead>): TProcess;
+
 }
 
-export interface IDataHandler<TProcessing = any, TSend = any, TWrite = any> {
-  processing(data: TProcessing): void;
+export interface IHandler<TSend = any, TWrite = any, TProcess = any> {
 
   send(data: TSend): void;
 
-  write$: Observable<TWrite>;
+  send$: Observable<TWrite>;
+
+  process(data: TProcess): void;
+
 }

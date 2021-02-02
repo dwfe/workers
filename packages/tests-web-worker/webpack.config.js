@@ -1,10 +1,10 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const {HtmlWebpackSkipAssetsPlugin} = require('html-webpack-skip-assets-plugin');
 const ChunkListByEntrypoint = require('./webpack/plugins/chunk-list-by-entrypoint');
-const path = require('path')
-const {join, resolve} = path;
-const SRC = resolve(__dirname, 'src')
+const {join, resolve} = require('path')
+
 const DIST = resolve(__dirname, 'dist')
+const SRC = resolve(__dirname, 'src')
 
 const workerFilePattern = 'worker_'
 const workerEntrypoint01 = `${workerFilePattern}01`
@@ -13,7 +13,7 @@ module.exports = [
   {
     entry: {
       bundle: './index.ts',
-      [`${workerEntrypoint01}`]: join(SRC, 'exchanges/01/worker-side-context/index.ts'),
+      [`${workerEntrypoint01}`]: join(SRC, 'exchanges/01/worker-side-context'),
     },
     output: {
       path: DIST,

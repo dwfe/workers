@@ -1,16 +1,16 @@
-import {IDataConverter, IMessageEvent, IMessagePost} from '../index';
+import {IConverter, IMessagePost} from '../index';
 
-export class StructuredCloneConverter<TProcessing = any, TPost = any> implements IDataConverter<any, TProcessing, any, TPost> {
+export class StructuredCloneConverter<TWrite = any, TPost = any, TRead = any, TProcess = any> implements IConverter<TWrite, TPost, TRead, TProcess> {
 
-  read(e: IMessageEvent): TProcessing {
-    return e.data; // do nothing
-  }
-
-  write(data): IMessagePost<TPost> {
+  write(data: TWrite): IMessagePost<TPost> {
     return {
-      message: data, // do nothing
+      message: data as any as TPost, // do nothing
       transfer: []
     };
+  }
+
+  read(e: MessageEvent<TRead>): TProcess {
+    return e.data as any as TProcess; // do nothing
   }
 
 }
