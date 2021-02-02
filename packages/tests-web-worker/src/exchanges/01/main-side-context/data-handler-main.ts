@@ -1,4 +1,4 @@
-import {DataHandler} from '@dwfe/test-workers-core';
+import {DataHandler} from '@dwfe/web-worker';
 
 export class DataHandlerMain extends DataHandler {
   processing(data: any) {

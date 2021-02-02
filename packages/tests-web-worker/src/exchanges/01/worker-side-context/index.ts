@@ -1,4 +1,4 @@
-import {ContextSide, StructuredCloneConverter} from '@dwfe/test-workers-core'
+import {ContextSide, StructuredCloneConverter} from '@dwfe/web-worker'
 import {DataHandlerWorker} from './data-handler-worker'
 
 const name = 'worker 01'

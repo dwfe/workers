@@ -2,19 +2,19 @@
   "name": "@dwfe/tests-web-worker",
   "private": true,
   "license": "UNLICENSED",
-  "main": "./dist/index.js",
+  "main": "./dist/esm",
   "typings": "./dist/types",
   "scripts": {
     "clean": "rimraf ./dist",
-    "build": "tsc -b",
-    "build watch": "tsc -b -w",
+    "build": "npm run clean && tsc -b",
+    "build watch": "npm run clean && tsc -b -w",
     "webpack:dev": "npm run clean && webpack --mode development",
     "start": "webpack-dev-server --mode development --port 4277 --open"
   },
   "devDependencies": {
     "@types/node": "12",
     "@dwfe/web-worker": "1",
-    "typescript": "3",
+    "typescript": "4",
     "@types/webpack": "4",
     "webpack": "4",
     "webpack-cli": "3",

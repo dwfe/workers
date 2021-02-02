@@ -1,4 +1,4 @@
-import {ContextSide, DataHandler, IDataConverter} from '@dwfe/test-workers-core';
+import {ContextSide, DataHandler, IDataConverter} from '@dwfe/web-worker';
 
 export abstract class AbstractExchange {
   abstract readonly name: string;
@@ -9,7 +9,7 @@ export abstract class AbstractExchange {
                         protected handlerMain: DataHandler) {
     // У обмена всегда две контекстные стороны:
     //  - 'worker-side-context' - его представляет воркер
-    //  - 'main-side-context'   - ассоциированный с воркером объект mainSide, который сейчас надо создать
+    //  - 'main-side-context'   - ассоциированный с воркером контекст main-контекст, который сейчас надо создать
     this.mainSide = new ContextSide(worker, 'main', converterMain, handlerMain)
   }
 
@@ -20,11 +20,11 @@ export abstract class AbstractExchange {
     this.worker.terminate()
   }
 
-  static async buildWorker(entrypoint, workerFilePattern, pathToChunkListJsonOnServer): Promise<Worker> {
+  static async buildWorker(pathToChunkListOnServer, entrypoint): Promise<Worker> {
     try {
-      // На сервере по пути 'pathToChunkListJsonOnServer' хранится JSON файл.
+      // На сервере по пути 'pathToChunkListOnServer' хранится JSON файл.
       // В нем для каждой entrypoint(это те, которые в конфиге webpack'а указываются)
-      // перечислены все принадлежащие ей чанки, например:
+      // перечислены все ее чанки, например:
       //   {
       //     "worker_01": {
       //       "js": [
@@ -41,17 +41,16 @@ export abstract class AbstractExchange {
       //
       // Задача:
       //   1) получить этот JSON файл
-      //   2) получить из него список чанков(файлов) для entrypoint, который использовался при компиляции воркера
-      //   3) из списка получить название конкретного файла, куда был скомпилирован код воркера
+      //   2) получить из него список чанков воркера
+      //   3) из списка получить название конкретного файла, содержащего код воркера
       //   4) создать воркер
       //
-      const fileName = await fetch(pathToChunkListJsonOnServer)
-        .then(async response => await response.json().then(json =>
-          json[entrypoint].js.find(chunk => chunk.includes(workerFilePattern))
-        ))
-      return new Worker(`./${fileName}`) // путь, где лежит файл воркера на сервере!
+      return fetch(pathToChunkListOnServer)
+        .then(response => response.json())
+        .then(json => json[entrypoint].js[0])
+        .then(fileName => new Worker(`./${fileName}`)); // файл воркера лежит на сервере!
     } catch (e) {
-      throw new Error(`${this.name}.buildWorker(${entrypoint}, ${pathToChunkListJsonOnServer}), ${e}`)
+      throw new Error(`${this.name}.buildWorker(${entrypoint}, ${pathToChunkListOnServer}), ${e}`)
     }
   }
 

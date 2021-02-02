@@ -1,12 +1,14 @@
 {
-  "name": "dwfe-test-workers",
-  "version": "1.0.0",
-  "license": "MIT",
+  "name": "dwfe-workers",
+  "private": true,
+  "license": "UNLICENSED",
   "scripts": {
-    "bootstrap": "lerna bootstrap --hoist",
-    "clean:dist": "lerna run clean",
-    "total:clean": "npm run clean:dist && lerna clean --yes && rimraf package-lock.json && rimraf ./node_modules",
-    "lerna clean & build": "npm run clean:dist && lerna run build"
+    "clean": "lerna run clean && rimraf ./dist",
+    "build": "npm run clean && tsc -b",
+    "build:watch": "npm run clean && tsc -b -w",
+    "bootstrap": "npm run clean && rimraf package-lock.json && lerna bootstrap --hoist",
+    "total:clean": "npm run clean && lerna clean --yes && rimraf package-lock.json && rimraf ./node_modules",
+    "publish": "npm run build && lerna publish"
   },
   "devDependencies": {
     "lerna": "3",

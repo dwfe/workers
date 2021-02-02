@@ -1,6 +1,7 @@
 import {Observable} from 'rxjs';
 
-export type ContextType = Worker | DedicatedWorkerGlobalScope;
+export type ContextType = Worker // для main-контекста
+  | DedicatedWorkerGlobalScope;  // для контекста воркера, обычно это self
 
 export interface IMessageEvent<TData = any> extends MessageEvent {
   data: TData;

@@ -1,0 +1,19 @@
+{
+  "extends": "./config/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist/esm",
+    "baseUrl": ".",
+    "skipLibCheck": true
+  },
+  "references": [
+    { "path": "./packages/web-worker" },
+  ],
+  "exclude": [
+    "**/tests*",
+    "**/*.test.ts",
+    "**/node_modules",
+    "**/dist",
+    "**/*.d.ts"
+  ]
+}

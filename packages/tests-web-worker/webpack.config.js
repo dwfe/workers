@@ -1,9 +1,10 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const {HtmlWebpackSkipAssetsPlugin} = require('html-webpack-skip-assets-plugin');
-const ChunkListByEntrypoint = require('./webpack/plugins/chunk-list-by-entrypoint')
+const ChunkListByEntrypoint = require('./webpack/plugins/chunk-list-by-entrypoint');
 const path = require('path')
-const SRC = path.resolve(__dirname, 'src')
-const DIST = path.resolve(__dirname, 'dist')
+const {join, resolve} = path;
+const SRC = resolve(__dirname, 'src')
+const DIST = resolve(__dirname, 'dist')
 
 const workerFilePattern = 'worker_'
 const workerEntrypoint01 = `${workerFilePattern}01`
@@ -11,8 +12,8 @@ const workerEntrypoint01 = `${workerFilePattern}01`
 module.exports = [
   {
     entry: {
-      [`${workerEntrypoint01}`]: path.join(SRC, 'exchanges/01/worker-side-context/index.ts'),
-      bundle: path.join(SRC, 'index.ts'),
+      bundle: './index.ts',
+      [`${workerEntrypoint01}`]: join(SRC, 'exchanges/01/worker-side-context/index.ts'),
     },
     output: {
       path: DIST,
@@ -31,8 +32,8 @@ module.exports = [
     plugins: [
       new HtmlWebpackPlugin({
         filename: 'index.html',
-        template: path.join(SRC, 'assets/index.html'),
-        favicon: path.join(SRC, 'assets/favicon.ico'),
+        template: join(SRC, 'assets/index.html'),
+        favicon: join(SRC, 'assets/favicon.ico'),
         skipAssets: [`${workerFilePattern}*`]
       }),
       new HtmlWebpackSkipAssetsPlugin(),
