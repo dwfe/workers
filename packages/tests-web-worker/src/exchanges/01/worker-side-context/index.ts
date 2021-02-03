@@ -1,7 +1,9 @@
 import {tap} from 'rxjs/operators'
-import {ContextSide, StructuredCloneConverter} from '@dwfe/web-worker'
+import {ContextSide, IConverter} from '@dwfe/web-worker'
+import {registry} from '../../exchange.factory';
 
-const workerSide = new ContextSide(self, 'worker 01', new StructuredCloneConverter())
+const converter = registry.get('01')?.workerConverter as IConverter;
+const workerSide = new ContextSide(self, 'worker', converter);
 workerSide.setDebug(true);
 
 workerSide.in$.pipe(

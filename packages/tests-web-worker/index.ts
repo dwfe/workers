@@ -1,13 +1,21 @@
-import {Exchange01} from './src/exchanges/01/exchange-01';
+import {tap} from 'rxjs/operators';
+import {ExchangeFactory} from './src/exchanges/exchange.factory';
 
-const workerFilePattern = 'worker_'
-const workerEntrypoint01 = `${workerFilePattern}01`
-const pathToChunkListOnServer = './chunk_list_by_entrypoint.json'
+ExchangeFactory.get('01').then(exchange => {
 
-Exchange01
-  .buildWorker(pathToChunkListOnServer, workerEntrypoint01)
-  .then(worker => {
-    new Exchange01(worker).start();
-  })
-  .catch(e => console.error('Exchange01', e))
-;
+  console.log(`--> start ${exchange.name}`,)
+
+  exchange.mainSide.send({hello: 'world123'})
+
+  exchange.mainSide.in$.pipe(
+    tap(data => {
+      console.log(`main process`, data)
+    }),
+  ).subscribe();
+
+  setTimeout(() => {
+    exchange.stop();
+    console.log(`=== ${exchange.name} stopped`,)
+  }, 4000)
+
+});

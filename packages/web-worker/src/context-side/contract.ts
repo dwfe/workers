@@ -1,5 +1,5 @@
-export type ContextType = Worker // для main-контекста
-  | DedicatedWorkerGlobalScope;  // для контекста воркера, обычно это self
+export type ContextType = Worker // for Main thread
+  | DedicatedWorkerGlobalScope;  // for Worker thread, usually this is 'self'
 
 export interface IMessagePost<TData = any> {
   message: TData;
