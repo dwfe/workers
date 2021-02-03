@@ -1,19 +1,32 @@
-import {StructuredCloneConverter} from '@dwfe/web-worker';
-import {Exchange} from './exchange';
-import {TExchangeData} from './contarct';
+import {ContextSide, StructuredCloneConverter} from '@dwfe/web-worker';
+import {TSide, TSideData} from './contract';
 
-export const registry = new Map<string, TExchangeData>([
-  ['01', {mainConverter: new StructuredCloneConverter(), workerConverter: new StructuredCloneConverter()}]
+export const exchanges = new Map<string, TSideData>([
+  ['01', {converter: {main: new StructuredCloneConverter(), worker: new StructuredCloneConverter()}}]
 ]);
 
-export class ExchangeFactory {
+export class SideFactory {
 
-  static async get(id: string): Promise<Exchange> {
-    if (!registry.has(id))
+  static async get(side: TSide, id: string): Promise<ContextSide> {
+    if (!exchanges.has(id))
       throw new Error(`unknown exchange '${id}'`);
-    const worker = await buildWorker(id);
-    const {mainConverter} = registry.get(id) as TExchangeData;
-    return new Exchange(id, mainConverter, worker);
+
+    let ctx: ContextSide;
+    const {converter} = exchanges.get(id) as TSideData;
+
+    switch (side) {
+      case 'main':
+        const worker = await buildWorker(id);
+        ctx = new ContextSide(side, worker, converter.main)
+        break;
+      case 'worker':
+        ctx = new ContextSide(side, self, converter.worker);
+        break;
+      default:
+        throw new Error(`unknown side '${side}'`);
+    }
+    ctx.setDebug(true);
+    return ctx;
   }
 
 }

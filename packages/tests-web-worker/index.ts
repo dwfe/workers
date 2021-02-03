@@ -1,21 +1,24 @@
 import {tap} from 'rxjs/operators';
-import {ExchangeFactory} from './src/exchanges/exchange.factory';
+import {exchanges, SideFactory} from './src/exchanges/side.factory';
 
-ExchangeFactory.get('01').then(exchange => {
+Array.from(exchanges.keys()).forEach(async id => {
+    const exchange = `Exchange_${id}`;
+    console.log(`--> start ${exchange}`,)
 
-  console.log(`--> start ${exchange.name}`,)
+    const side = await SideFactory.get('main', id);
 
-  exchange.mainSide.send({hello: 'world123'})
+    side.received$.pipe(
+      tap(data => {
+        console.log(`main process`, data)
+      }),
+    ).subscribe();
 
-  exchange.mainSide.in$.pipe(
-    tap(data => {
-      console.log(`main process`, data)
-    }),
-  ).subscribe();
+    side.send({hello: 'world123'})
 
-  setTimeout(() => {
-    exchange.stop();
-    console.log(`=== ${exchange.name} stopped`,)
-  }, 4000)
-
-});
+    setTimeout(() => {
+      side.send({before: 'die'})
+      side.stop();
+      console.log(`=== ${exchange} stopped`,)
+    }, 4000)
+  }
+)
