@@ -1,6 +1,6 @@
 import {IConverter, IMessagePost} from '../index';
 
-export class StructuredCloneConverter<TSend = any, TPost = any, TRead = any, TProcess = any> implements IConverter<TSend, TPost, TRead, TProcess> {
+export class StructuredCloneConverter<TSend = any, TPost = any, TRead = any, TReceived = any> implements IConverter<TSend, TPost, TRead, TReceived> {
 
   write(data: TSend): IMessagePost<TPost> {
     return {
@@ -9,8 +9,8 @@ export class StructuredCloneConverter<TSend = any, TPost = any, TRead = any, TPr
     };
   }
 
-  read(e: MessageEvent<TRead>): TProcess {
-    return e.data as any as TProcess; // do nothing
+  read(e: MessageEvent<TRead>): TReceived {
+    return e.data as any as TReceived; // do nothing
   }
 
 }

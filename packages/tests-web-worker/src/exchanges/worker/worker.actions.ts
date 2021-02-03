@@ -12,7 +12,7 @@ export class WorkerActions {
   constructor(private side: ContextSide) {
     side.received$.pipe(
       tap(data => {
-        console.log(`worker process`, data)
+        console.log(`worker process received`, data)
         side.send({...data, time: new Date().toISOString()});
       })
     ).subscribe();

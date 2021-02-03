@@ -14,7 +14,7 @@ export class MainActions {
   constructor(private side: ContextSide) {
     side.received$.pipe(
       tap(data => {
-        console.log(`main process`, data)
+        console.log(`main process received`, data)
       })
     ).subscribe();
   }

@@ -6,10 +6,10 @@ export interface IMessagePost<TData = any> {
   transfer: Transferable[];
 }
 
-export interface IConverter<TSend = any, TPost = any, TRead = any, TProcess = any> {
+export interface IConverter<TSend = any, TPost = any, TRead = any, TReceived = any> {
 
   write(data: TSend): IMessagePost<TPost>;
 
-  read(e: MessageEvent<TRead>): TProcess;
+  read(e: MessageEvent<TRead>): TReceived;
 
 }
