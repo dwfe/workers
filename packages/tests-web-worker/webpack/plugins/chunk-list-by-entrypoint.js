@@ -27,8 +27,8 @@ module.exports = function ({filename} = defaultOpt) {
         const js = files.filter(f => /.js/.test(f) && !/.js.map/.test(f));
         const css = files.filter(f => /.css/.test(f) && !/.css.map/.test(f));
         const entrypoint = {};
-        if (js.length) entrypoint["js"] = js;
-        if (css.length) entrypoint["css"] = css;
+        if (js.length) entrypoint['js'] = js;
+        if (css.length) entrypoint['css'] = css;
 
         data[key] = entrypoint;
       }

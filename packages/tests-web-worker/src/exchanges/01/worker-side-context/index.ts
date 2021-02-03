@@ -1,14 +1,17 @@
+import {tap} from 'rxjs/operators'
 import {ContextSide, StructuredCloneConverter} from '@dwfe/web-worker'
-import {WorkerHandler} from './worker.handler'
 
-const handler = new WorkerHandler()
-const workerSide = new ContextSide(self, 'worker 01', new StructuredCloneConverter(), handler)
+const workerSide = new ContextSide(self, 'worker 01', new StructuredCloneConverter())
 workerSide.setDebug(true);
 
+workerSide.in$.pipe(
+  tap(data => workerSide.send({...data, time: +new Date()}))
+).subscribe();
+
 setTimeout(() => {
-  handler.send({from: 'worker 3000'})
+  workerSide.send({from: 'worker 3000'})
 }, 3000)
 
 setTimeout(() => {
-  handler.send({from: 'worker 5000'})
+  workerSide.send({from: 'worker 5000'})
 }, 5000)

@@ -1,31 +1,36 @@
-import {fromEvent, merge, of, Subject} from 'rxjs'
-import {catchError, map, mapTo, takeUntil, tap} from 'rxjs/operators'
-import {ContextType, IConverter, IHandler} from './contract';
+import {fromEvent, merge, Observable, of, Subject} from 'rxjs'
+import {catchError, map, mapTo, shareReplay, takeUntil, tap} from 'rxjs/operators'
+import {ContextType, IConverter} from './contract';
 
-export class ContextSide<TSend = any, TWrite = any, TPost = any, TRead = any, TProcess = any> {
+export class ContextSide<TSend = any, TPost = any, TRead = any, TProcess = any> {
 
   private stopper = new Subject();
   private isDebug = false;
 
+  private sendSubj = new Subject<TSend>();
+
   constructor(public readonly ctx: ContextType,
               public readonly name: string,
-              public readonly converter: IConverter<TWrite, TPost, TRead, TProcess>,
-              public readonly handler: IHandler<TSend, TWrite, TProcess>) {
+              public readonly converter: IConverter<TSend, TPost, TRead, TProcess>) {
     this.start$.subscribe();
   }
 
-  private out$ = this.handler.send$.pipe(
+  send(data: TSend) {
+    this.sendSubj.next(data);
+  }
+
+  private out$ = this.sendSubj.asObservable().pipe(
     tap(d => this.log('to converter.write', d)),
-    map(d => this.converter.write(d)),         // TWrite -> TPost
+    map(d => this.converter.write(d)),         // TSend -> TPost
     tap(data => this.log('to postMessage', data)),
     tap(data => this.ctx.postMessage(data.message, data.transfer)),
   );
 
-  private in$ = fromEvent<MessageEvent>(this.ctx, 'message').pipe(
+  in$: Observable<TProcess> = fromEvent<MessageEvent>(this.ctx, 'message').pipe(
     tap(event => this.log('to converter.read', event.data)),
     map(event => this.converter.read(event)),  // TRead -> TProcess
     tap(data => this.log('to process', data)),
-    tap(data => this.handler.process(data)),
+    shareReplay(1),
   );
 
   private error$ = fromEvent<MessageEvent>(this.ctx, 'messageerror').pipe(
@@ -34,7 +39,6 @@ export class ContextSide<TSend = any, TWrite = any, TPost = any, TRead = any, TP
 
   private start$ = merge(
     this.out$,
-    this.in$,
     this.error$,
   ).pipe(
     takeUntil(this.stopper.asObservable()),

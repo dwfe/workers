@@ -1,16 +1,15 @@
-import {ContextSide, IConverter, IHandler} from '@dwfe/web-worker';
+import {ContextSide, IConverter} from '@dwfe/web-worker';
 
 export abstract class AbstractExchange {
   abstract readonly name: string;
   protected readonly mainSide: ContextSide;
 
   protected constructor(protected worker: Worker,
-                        protected mainConverter: IConverter,
-                        protected mainHandler: IHandler) {
+                        protected mainConverter: IConverter) {
     // У обмена всегда две контекстные стороны:
     //  - 'worker-side-context' - его представляет воркер
     //  - 'main-side-context'   - ассоциированный с воркером контекст main-контекст, который сейчас надо создать
-    this.mainSide = new ContextSide(worker, 'main', mainConverter, mainHandler)
+    this.mainSide = new ContextSide(worker, 'main', mainConverter)
     this.mainSide.setDebug(true);
   }
 
