@@ -26,7 +26,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
     tap(data => this.ctx.postMessage(data.message, data.transfer)),
   );
 
-  received$: Observable<TReceived> = fromEvent<MessageEvent>(this.ctx, 'message').pipe(
+  received$: Observable<TReceived> = fromEvent<MessageEvent<TRead>>(this.ctx, 'message').pipe(
     tap(event => this.log('to converter.read', event.data)),
     map(event => this.converter.read(event)), // TRead -> TReceived
     tap(data => this.log('to received', data)),
