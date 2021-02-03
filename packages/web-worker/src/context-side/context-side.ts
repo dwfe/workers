@@ -46,6 +46,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TProcess = any> 
   );
 
   stop() {
+    this.log('stop');
     this.stopper.next(true);
     this.stopper.complete();
     if (this.ctx instanceof Worker) {
