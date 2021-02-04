@@ -1,10 +1,6 @@
-export type ContextType = Worker // for Main thread
-  | DedicatedWorkerGlobalScope;  // for Worker thread, usually this is 'self'
-
-export interface IMessagePost<TData = any> {
-  message: TData;
-  transfer: Transferable[];
-}
+export type ContextType =
+  Worker | ServiceWorkerContainer |                       // for Main execution context
+  DedicatedWorkerGlobalScope | ServiceWorkerGlobalScope;  // for Worker execution context, usually this is reference inside 'self' variable
 
 export interface IConverter<TSend = any, TPost = any, TRead = any, TReceived = any> {
 
@@ -12,4 +8,9 @@ export interface IConverter<TSend = any, TPost = any, TRead = any, TReceived = a
 
   read(e: MessageEvent<TRead>): TReceived;
 
+}
+
+export interface IMessagePost<TData = any> {
+  message: TData;
+  transfer: Transferable[];
 }

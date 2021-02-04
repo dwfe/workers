@@ -54,5 +54,5 @@ const buildWorker = (id: string): Promise<Worker> => {
   return fetch('./chunk_list_by_entrypoint.json')  // 1) получить JSON файл с информацией обо всех чанках
     .then(response => response.json())             // 2) получить из него список чанков воркера
     .then(json => json[entrypoint].js[0])          // 3) получить название конкретного файла, содержащего код воркера
-    .then(fileName => new Worker(`/${fileName}`)) // 4) создать воркер. Файл воркера лежит на сервере!
+    .then(fileName => new Worker(`/${fileName}`))  // 4) создать воркер. Файл воркера лежит на сервере!
 }

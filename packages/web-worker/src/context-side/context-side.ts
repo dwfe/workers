@@ -1,6 +1,6 @@
 import {fromEvent, merge, Observable, Subject} from 'rxjs'
 import {map, mapTo, shareReplay, takeUntil, tap} from 'rxjs/operators'
-import {ContextType, IConverter} from './contract';
+import {ContextType, IConverter, IMessagePost} from './contract';
 
 export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any> {
 
@@ -23,7 +23,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
     tap(d => this.log('to converter.write', d)),
     map(d => this.converter.write(d)),        // TSend -> TPost
     tap(data => this.log('to postMessage', data)),
-    tap(data => this.ctx.postMessage(data.message, data.transfer)),
+    tap(data => this.postMessage(data)),
   );
 
   received$: Observable<TReceived> = fromEvent<MessageEvent<TRead>>(this.ctx, 'message').pipe(
@@ -46,7 +46,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   );
 
   stop() {
-    this.log('stop');
+    this.log('stopping...');
     this.stopper.next(true);
     this.stopper.complete();
     if (this.ctx instanceof Worker) {
@@ -57,6 +57,20 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   }
 
 //region Support
+
+  private postMessage(data: IMessagePost<TPost>): void {
+    this.ctx['postMessage']?.(data.message, data.transfer);
+    /**
+     * From all ContextTypes only ServiceWorkerContainer has no 'postMessage' method.
+     * But ServiceWorkerContainer.controller may not have been initialized yet.
+     */
+    if (!this.ctx['postMessage']) {
+      if ((this.ctx as ServiceWorkerContainer).controller?.postMessage)
+        ((this.ctx as ServiceWorkerContainer).controller?.postMessage)?.(data.message, data.transfer);
+      else
+        throw new Error(`${this.logPrefix} is missing a method 'postMessage'`);
+    }
+  }
 
   setDebug(value: boolean) {
     this.isDebug = value;
