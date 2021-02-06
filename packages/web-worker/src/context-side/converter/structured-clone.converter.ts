@@ -1,4 +1,4 @@
-import {IConverter, IMessagePost} from '../index';
+import {IConverter, IMessagePost} from '../index'
 
 export class StructuredCloneConverter<TSend = any, TPost = any, TRead = any, TReceived = any> implements IConverter<TSend, TPost, TRead, TReceived> {
 
