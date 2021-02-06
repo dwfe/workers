@@ -7,7 +7,7 @@
 		<key>Active Layer</key>
 		<string>Default</string>
 		<key>Visible Rect</key>
-		<string>{{30, 0}, {808, 684}}</string>
+		<string>{{30, 0}, {1129, 684}}</string>
 		<key>Zoom Factor</key>
 		<real>1</real>
 	</dict>
@@ -18,7 +18,7 @@
 		<key>Active Layer</key>
 		<string>Default</string>
 		<key>Visible Rect</key>
-		<string>{{43, 0}, {808, 684}}</string>
+		<string>{{43, 0}, {1129, 684}}</string>
 		<key>Zoom Factor</key>
 		<real>1</real>
 	</dict>
