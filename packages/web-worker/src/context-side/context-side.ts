@@ -75,7 +75,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
     this.start$.subscribe()
   }
 
-  private postMessage(data: IMessagePost<TPost>): void {
+  private async postMessage(data: IMessagePost<TPost>): Promise<void> {
     switch (this.ctxType) {
       /**
        * ServiceWorkerContainer has no 'postMessage' method.
@@ -86,6 +86,11 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
           ((this.ctx as ServiceWorkerContainer).controller?.postMessage)?.(data.message, data.transfer)
         else
           throw new Error(`${this.logPrefix} is missing a method 'postMessage'`)
+        break;
+      }
+      case CtxType.ServiceWorkerGlobalScope: {
+        const clients = await (this.ctx as ServiceWorkerGlobalScope).clients.matchAll({includeUncontrolled: true})
+        clients.forEach(client => client.postMessage(data.message, data.transfer))
         break;
       }
       default:
