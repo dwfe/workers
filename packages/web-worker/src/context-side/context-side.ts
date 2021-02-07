@@ -4,11 +4,10 @@ import {Ctx, CtxType, IConverter, IMessagePost} from './contract'
 
 export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any> {
 
+  private sender = new Subject<TSend>()
   private stopper = new Subject()
-  private isDebug = false
   private ctxType!: CtxType
-
-  private sendSubj = new Subject<TSend>()
+  private isDebug = false
 
   constructor(public readonly id: string,
               public readonly ctx: Ctx,
@@ -17,10 +16,10 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   }
 
   send(data: TSend) {
-    this.sendSubj.next(data)
+    this.sender.next(data)
   }
 
-  private send$ = this.sendSubj.asObservable().pipe(
+  private send$ = this.sender.asObservable().pipe(
     tap(d => this.log('to converter.write', d)),
     map(d => this.converter.write(d)),        // TSend -> TPost
     tap(data => this.log('to postMessage', data)),

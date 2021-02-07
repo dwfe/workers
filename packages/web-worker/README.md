@@ -8,3 +8,6 @@ Converter variants:
 2. [Circular buffer](https://en.wikipedia.org/wiki/Circular_buffer)
 3. Transferable
 
+###ToDo:
+- учесть, что sw регистрируется in-scope, соответственно `ServiceWorkerGlobalScope` должно быть столько, сколько и scope
+  - отсюда не понятно, почему `ServiceWorkerContainer.controller` только один
