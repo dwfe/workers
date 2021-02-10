@@ -6,6 +6,9 @@ const isDebug = true;
 addEventListener("install", event => {
   log("installing…");
   skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
+  event.waitUntil(
+    precache(CACHE_NAME, [])
+  );
 });
 
 addEventListener("activate", event => {
@@ -20,8 +23,9 @@ addEventListener("activate", event => {
 addEventListener("fetch", event => {
   const req = event.request;
   const url = new URL(req.url);
-  if (url.origin === location.origin && isCacheControl(url)) {
-    event.respondWith(getFromCacheOrFetch(req, url));
+  const pathname = url.pathname;
+  if (url.origin === location.origin && isCacheControl(pathname)) {
+    event.respondWith(getFromCacheOrFetch(req, pathname));
   }
 });
 
@@ -43,14 +47,29 @@ addEventListener("message", async ({data}) => {
 
 //region Cache
 
-function isCacheControl(url) {
-  const pathname = url.pathname;
+function isCacheControl(pathname) {
   if (pathname.includes("sw.js") || pathname.includes("index.html"))
     return false;
   else if (pathname.startsWith("/static") || pathname.startsWith("/fonts"))
     return true;
   const ext = pathname.split(".").pop();
   return ["js", "woff2", "css"].includes(ext);
+}
+
+async function precache(cacheName, pathnames, throwError = false) {
+  const cache = await getCache(cacheName);
+  await Promise.all(
+    pathnames.map(pathname =>
+      fetch(pathname).then(resp => {
+        if (resp.ok) {
+          return cacheResponse(cache, pathname, resp, pathname);
+        }
+        const message = `precache '${pathname}', HTTP status: ${resp.status}`;
+        if (throwError)
+          throw new Error(message);
+        logError(message);
+      }))
+  );
 }
 
 async function removeOldCache() {
@@ -62,18 +81,22 @@ async function removeOldCache() {
   );
 }
 
-async function getFromCacheOrFetch(req, url) {
+async function getFromCacheOrFetch(req, pathname) {
   const key = req;
   const cache = await getCache();
   const resp = await cache.match(key);
   return (
     resp ||
     fetch(req).then(response => {
-      cache.put(key, response.clone());
-      log("cache", url.pathname);
+      cacheResponse(cache, key, response, pathname)
       return response;
     })
   );
+}
+
+async function cacheResponse(cache, key, resp, pathname) {
+  log("cache", pathname);
+  return cache.put(key, resp.clone());
 }
 
 async function getCacheLength() {
@@ -81,12 +104,11 @@ async function getCacheLength() {
   return keys.length;
 }
 
-function getCache() {
-  return caches.open(CACHE_NAME);
+function getCache(cacheName = CACHE_NAME) {
+  return caches.open(cacheName);
 }
 
 //endregion
-
 
 //region Clients
 
@@ -100,7 +122,6 @@ async function sendToClients(data) {
 }
 
 //endregion
-
 
 //region Support
 
