@@ -54,7 +54,7 @@
       if (hour >= 1 && hour <= 4) { // ночью
         Array.from(registrations).forEach(([scope, reg], i) => {
           reg.update();
-          console.log(`sw check for update, scope: '${reg.scope}'`);
+          console.log(`sw check for update, scope: '${reg.scope}', ${new Date()}`);
         });
       }
     }, 1000 * 60 * 60) // каждый час
