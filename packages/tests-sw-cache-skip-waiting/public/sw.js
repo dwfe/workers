@@ -65,10 +65,10 @@ async function precache(cacheName, pathnames, throwError = false) {
           return cacheResponse(cache, pathname, resp, pathname);
         }
         const message = `precache '${pathname}', HTTP status: ${resp.status}`;
-        if (throwError)
-          throw new Error(message);
+        if (throwError) throw new Error(message);
         logError(message);
-      }))
+      })
+    )
   );
 }
 
@@ -88,7 +88,7 @@ async function getFromCacheOrFetch(req, pathname) {
   return (
     resp ||
     fetch(req).then(response => {
-      cacheResponse(cache, key, response, pathname)
+      cacheResponse(cache, key, response, pathname);
       return response;
     })
   );
