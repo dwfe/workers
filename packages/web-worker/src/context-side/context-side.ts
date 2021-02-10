@@ -88,7 +88,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
         break;
       }
       case CtxType.ServiceWorkerGlobalScope: {
-        const clients = await (this.ctx as ServiceWorkerGlobalScope).clients.matchAll({includeUncontrolled: true})
+        const clients = await (this.ctx as ServiceWorkerGlobalScope).clients.matchAll({includeUncontrolled: false})
         clients.forEach(client => client.postMessage(data.message, data.transfer))
         break;
       }

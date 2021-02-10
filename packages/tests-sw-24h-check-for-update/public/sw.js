@@ -1,5 +1,5 @@
 
-const version = '#222222222222222222222222222222'
+const version = 'v1'
 
 self.addEventListener('install', event => {
   console.log(`${version} installing…`);
