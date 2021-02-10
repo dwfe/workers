@@ -51,12 +51,12 @@
 
     setInterval(() => {
       const hour = new Date().getHours();
-      if (hour >= 1 && hour <= 3) { // ночью с 1 часа до 3
+      if (hour >= 1 && hour <= 4) { // ночью
         Array.from(registrations).forEach(([scope, reg], i) => {
           reg.update();
         });
       }
-    }, 1000 * 60 * 60 * 3) // каждые 3 часа
+    }, 1000 * 60 * 60) // каждый час
 
     setTimeout(() => {
       navigator.serviceWorker.controller?.postMessage({type: "GET_INFO"})
