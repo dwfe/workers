@@ -20,6 +20,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   }
 
   private send$ = this.sender.asObservable().pipe(
+    takeUntil(this.stopper.asObservable()),
     tap(d => this.log('to converter.write', d)),
     map(d => this.converter.write(d)),        // TSend -> TPost
     tap(data => this.log('to postMessage', data)),
@@ -27,6 +28,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   )
 
   received$: Observable<TReceived> = fromEvent<MessageEvent<TRead>>(this.ctx, 'message').pipe(
+    takeUntil(this.stopper.asObservable()),
     tap(event => this.log('to converter.read', event.data)),
     map(event => this.converter.read(event)), // TRead -> TReceived
     tap(data => this.log('to received', data)),
@@ -34,7 +36,8 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   )
 
   private error$ = fromEvent<MessageEvent>(this.ctx, 'messageerror').pipe(
-    tap(event => this.error('messageerror', event)),
+    takeUntil(this.stopper.asObservable()),
+    tap(event => this.logError('messageerror', event)),
   )
 
   private start$ = merge(
@@ -45,9 +48,14 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   )
 
   stop() {
-    this.log('stopping...');
-    this.stopper.next(true);
-    this.stopper.complete();
+    this.log('stopping...')
+    this.stopper.next(true)
+    this.stopper.complete()
+  }
+
+  terminate() {
+    this.stop()
+    this.log('terminating...')
     switch (this.ctxType) {
       case CtxType.Worker:
         (this.ctx as Worker).terminate();
@@ -74,27 +82,29 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
     this.start$.subscribe()
   }
 
-  private async postMessage(data: IMessagePost<TPost>): Promise<void> {
+  private async postMessage({message, transfer}: IMessagePost<TPost>): Promise<void> {
     switch (this.ctxType) {
       /**
        * ServiceWorkerContainer has no 'postMessage' method.
        * But ServiceWorkerContainer.controller may not have been initialized yet.
        */
       case CtxType.ServiceWorkerContainer: {
-        if ((this.ctx as ServiceWorkerContainer).controller?.postMessage)
-          ((this.ctx as ServiceWorkerContainer).controller?.postMessage)?.(data.message, data.transfer)
-        else
-          throw new Error(`${this.logPrefix} is missing a method 'postMessage'`)
+        if ((this.ctx as ServiceWorkerContainer).controller?.postMessage) {
+          // @ts-ignore
+          (this.ctx as ServiceWorkerContainer).controller.postMessage(message, transfer)
+        } else
+          this.logError('can\'t send a message, because there is no activated Service Worker')
         break;
       }
       case CtxType.ServiceWorkerGlobalScope: {
         const clients = await (this.ctx as ServiceWorkerGlobalScope).clients.matchAll({includeUncontrolled: false})
-        clients.forEach(client => client.postMessage(data.message, data.transfer))
+        clients.forEach(client => client.postMessage(message, transfer))
         break;
       }
-      default:
+      default: {
         // @ts-ignore
-        this.ctx.postMessage(data.message, data.transfer)
+        this.ctx.postMessage(message, transfer)
+      }
     }
   }
 
@@ -109,7 +119,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
       console.log(this.logPrefix, ...args)
   }
 
-  error(...args) {
+  logError(...args) {
     console.error(this.logPrefix, ...args)
   }
 
