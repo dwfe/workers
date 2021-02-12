@@ -39,9 +39,9 @@
       .register("/sw.js", {scope: "/"})
       .then(reg => {
         registrations.set(reg.scope, reg);
-        console.log(`sw registered, scope: '${reg.scope}'`);
+        console.log(`sw[main] registered, scope: '${reg.scope}'`);
       })
-      .catch(err => console.error("sw registration error", err));
+      .catch(err => console.error("sw[main] registration error", err));
 
     navigator.serviceWorker.addEventListener("message", ({data}) => {
       if (data.type === "RELOAD_PAGE" && !isFirstInstall) {
@@ -51,13 +51,13 @@
 
     setInterval(() => {
       const hour = new Date().getHours();
-      if (hour >= 1 && hour <= 4) { // ночью
+      if (hour >= 1 && hour <= 4) {
         Array.from(registrations).forEach(([scope, reg], i) => {
           reg.update();
-          console.log(`sw check for update, scope: '${reg.scope}', ${new Date()}`);
+          console.log(`sw[main] check for update, scope: '${reg.scope}', ${new Date()}`);
         });
       }
-    }, 1000 * 60 * 60) // каждый час
+    }, 1000 * 60 * 60); // каждый час
 
     setTimeout(() => {
       navigator.serviceWorker.controller?.postMessage({type: "GET_INFO"})
