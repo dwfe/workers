@@ -4,32 +4,9 @@
  *   - хранит дополнительную информацию об этом кеше
  */
 class CacheItem {
-  constructor(title, version, pathStart) {
-    this.title = title;
-    this.version = version;
+  constructor(cacheName, pathStart) {
+    this.cacheName = cacheName;
     this.pathStart = pathStart;
-    this.cacheName = Cache.getCacheName(title, version);
-  }
-
-  match(pathname) {
-    return this.pathStart ? pathname.startsWith(this.pathStart) : false;
-  }
-
-  async getCache() {
-    return self.caches.open(this.cacheName);
-  }
-
-  async getLength() {
-    const keys = await this.getCache().then(cache => cache.keys());
-    return keys.length;
-  }
-
-  async getInfo() {
-    return {
-      title: this.title,
-      version: this.version,
-      length: await this.getLength()
-    };
   }
 
   /**
@@ -55,11 +32,31 @@ class CacheItem {
     );
   }
 
+  async getCache() {
+    return self.caches.open(this.cacheName.value);
+  }
+
+  async getInfo() {
+    return {
+      cacheName: this.cacheName.getInfo(),
+      length: await this.getLength()
+    };
+  }
+
+  async getLength() {
+    const keys = await this.getCache().then(cache => cache.keys());
+    return keys.length;
+  }
+
+  match(pathname) {
+    return this.pathStart ? pathname.startsWith(this.pathStart) : false;
+  }
+
   log(...args) {
-    self.log(`cache '${this.cacheName}'`, ...args);
+    self.log(`cache '${this.cacheName.value}'`, ...args);
   }
 
   logError(...args) {
-    self.logError(`cache '${this.cacheName}'`, ...args);
+    self.logError(`cache '${this.cacheName.value}'`, ...args);
   }
 }

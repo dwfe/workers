@@ -8,7 +8,7 @@ class Exchange {
   }
 
   async send(type, data) {
-    const clients = await Clients.getAll();
+    const clients = await self.clients.matchAll();
     this.log(`sending '${type}' to [${clients.length}] clients…`);
     clients.forEach(client => client.postMessage({ type, data }));
   }

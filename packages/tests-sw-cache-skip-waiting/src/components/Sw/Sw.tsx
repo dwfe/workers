@@ -24,15 +24,20 @@ export function Sw() {
     <div className="cache-info">
       <table className="cache-info_table">
         <caption>Кеш</caption>
+        <thead>
         <tr>
+          <th>scope</th>
           <th>title</th>
           <th>version</th>
           <th>length</th>
         </tr>
+        </thead>
+        <tbody>
         {
           info?.caches?.map((data, i) => <SwCache key={i} data={data}/>)
-        }</table>
+        }
+        </tbody>
+      </table>
     </div>
   </div>);
-
 }
