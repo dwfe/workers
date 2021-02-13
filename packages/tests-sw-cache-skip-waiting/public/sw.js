@@ -20,7 +20,15 @@ self.addEventListener("install", event => {
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
   event.waitUntil(
     cache
-      .precaching("cache || fetch -> cache", [])
+      .precaching("cache || fetch -> cache", [
+        "/worker.js",
+        "/fonts/BureausansLight.woff2",
+        "/fonts/Bureausans-Regular.woff2",
+        "/fonts/Bureausans-Bold.woff2",
+        "/fonts/Bureausans-Italic.woff2",
+        "/fonts/meteo/Bureausans_Meteo-Light.woff2",
+        "/fonts/PWF/PuansonWind.woff2"
+      ])
       .then(() => self.log("installed"))
   );
 });
