@@ -1,0 +1,32 @@
+.cache-info_table {
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.cache-info_table th,
+.cache-info_table td {
+  border: 1px solid #41dcfe;
+  padding: 5px;
+  font-weight: bold;
+}
+
+.cache-info_table th {
+  background-color: #13151a;
+  color: #c6c5c5;
+}
+
+.cache-info_table caption {
+  padding-bottom: 3px;
+}
+
+.cache-info_title {
+  text-align: left;
+}
+
+.cache-info_version {
+  color: lime;
+}
+
+.cache-info_length {
+  color: #f8f824;
+}

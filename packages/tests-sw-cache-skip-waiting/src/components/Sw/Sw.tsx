@@ -1,8 +1,9 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {SwCache} from '../SwCache/SwCache'
+import {SwCache} from './SwCache/SwCache'
+import './Sw.css'
 
 
-export function SwInfo() {
+export function Sw() {
   const [info, setInfo] = useState({} as any);
 
   const onSwMessage = useCallback(
@@ -21,12 +22,12 @@ export function SwInfo() {
 
   return (<div className="sw-info">
     <div className="cache-info">
-      <table>
+      <table className="cache-info_table">
         <caption>Кеш</caption>
         <tr>
-          <th>Title</th>
-          <th>Version</th>
-          <th>Length</th>
+          <th>title</th>
+          <th>version</th>
+          <th>length</th>
         </tr>
         {
           info?.caches?.map((data, i) => <SwCache key={i} data={data}/>)
