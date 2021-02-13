@@ -5,7 +5,7 @@
 class Cache {
   constructor() {
     this.app = new CacheItem("app", self.APP_VERSION);
-    // this.tiles = new CacheItem("tiles", self.TILES_VERSION, "/tiles");
+    this.tiles = new CacheItem("tiles", self.TILES_VERSION, "/tiles");
   }
 
   isControl(url) {
@@ -16,8 +16,8 @@ class Cache {
       return false;
     else if (
       pathname.startsWith("/static") ||
-      pathname.startsWith("/fonts")
-      // this.tiles.match(pathname)
+      pathname.startsWith("/fonts") ||
+      this.tiles.match(pathname)
     )
       return true;
     const ext = pathname.split(".").pop();
@@ -25,12 +25,12 @@ class Cache {
   }
 
   getItem(pathname) {
-    // if (this.tiles.match(pathname)) return this.tiles;
+    if (this.tiles.match(pathname)) return this.tiles;
     return this.app;
   }
 
   get items() {
-    return [this.app];
+    return [this.app, this.tiles];
   }
 
   async get(strategy, key, req, pathname, throwError = false) {
@@ -46,9 +46,7 @@ class Cache {
   }
 
   async getInfo() {
-    return Promise.all(
-      this.items.map(item => item.getInfo())
-    );
+    return Promise.all(this.items.map(item => item.getInfo()));
   }
 
   async precaching(strategy, pathnames, throwError = false) {
@@ -87,7 +85,7 @@ class Cache {
    "/:tiles:v333",
    ]
    */
-  async clearing() {
+  async clear() {
     self.log("cache clearing…");
 
     const cacheNames = await self.caches.keys();

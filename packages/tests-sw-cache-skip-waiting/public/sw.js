@@ -1,4 +1,5 @@
-self.APP_VERSION = "v2";
+self.APP_VERSION = "v1";
+self.TILES_VERSION = "v1";
 self.SCOPE = "/";
 self.controlExtentions = ["js", "css", "woff2", "ttf", "otf", "eot"];
 self.isDebug = true;
@@ -28,7 +29,7 @@ self.addEventListener("activate", event => {
   self.log("activating…");
   event.waitUntil(
     Clients.claim() // переключить всех клиентов на этот новый sw
-      .then(() => cache.clearing()) // клиенты уже смотрят на новый sw, значит можно почистить кеш
+      .then(() => cache.clear()) // клиенты уже смотрят на новый sw, значит можно почистить кеш
       .then(() => self.delay(5_000))
       .then(() => exchange.send("RELOAD_PAGE"))
       .then(() => self.log("activated"))

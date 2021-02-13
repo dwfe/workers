@@ -10,11 +10,11 @@ class Exchange {
   async send(type, data) {
     const clients = await Clients.getAll();
     this.log(`sending '${type}' to [${clients.length}] clients…`);
-    clients.forEach(client => client.postMessage({type, data}));
+    clients.forEach(client => client.postMessage({ type, data }));
   }
 
   async process(event) {
-    const {data} = event;
+    const { data } = event;
     this.log(`process '${data.type}'`);
 
     switch (data.type) {

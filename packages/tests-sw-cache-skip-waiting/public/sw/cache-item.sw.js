@@ -29,7 +29,7 @@ class CacheItem {
       title: this.title,
       version: this.version,
       length: await this.getLength()
-    }
+    };
   }
 
   /**
