@@ -3,28 +3,29 @@ import {CacheSw} from './cache/cache';
 import {ExchangeSw} from './exchange';
 
 export class Init {
-    constructor() {
-        self.Cache = CacheSw;
-        self.Exchange = ExchangeSw;
 
-        self.log = (...args) => {
-            if (self.isDebug) {
-                // const date = new Date();
-                // const dateISOStringCorrectTimeZone = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
-                // console.log(`[${dateISOStringCorrectTimeZone}] sw `, ...args);
+  static run() {
+    self.Cache = CacheSw;
+    self.Exchange = ExchangeSw;
 
-                console.log('sw', ...args);
-            }
-        };
+    self.log = (...args) => {
+      if (self.isDebug) {
+        // const date = new Date();
+        // const dateISOStringCorrectTimeZone = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
+        // console.log(`[${dateISOStringCorrectTimeZone}] sw `, ...args);
+        console.log('sw', ...args);
+      }
+    };
 
-        self.logError = (...args) => {
-            console.error('sw', ...args);
-        };
+    self.logError = (...args) => {
+      console.error('sw', ...args);
+    };
 
-        self.delay = async ms => {
-            return new Promise((resolve, reject) => {
-                setTimeout(resolve, ms);
-            });
-        };
-    }
+    self.delay = async ms => {
+      return new Promise((resolve, reject) => {
+        setTimeout(resolve, ms);
+      });
+    };
+  }
+
 }

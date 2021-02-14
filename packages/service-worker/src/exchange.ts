@@ -11,7 +11,7 @@ export class ExchangeSw {
 
     async send(type, data) {
         const clients = await self.clients.matchAll();
-        this.log(`sending '${type}' to [${clients.length}] clients…`);
+        this.log(`send '${type}' to [${clients.length}] clients…`);
         clients.forEach(client => client.postMessage({ type, data }));
     }
 

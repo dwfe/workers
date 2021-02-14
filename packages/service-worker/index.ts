@@ -1,5 +1,5 @@
 import {Init} from './src/init';
 
-new Init();
+Init.run();
 
 

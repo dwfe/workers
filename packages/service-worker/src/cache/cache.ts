@@ -1,5 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
-import {TCacheClearStrategy, TGetFromCacheStrategy} from './сontract'
+import {TCacheCleanStrategy, TGetFromCacheStrategy} from './сontract'
+import {CacheCleaner} from './cache-cleaner';
 import {CacheName} from './cache-name';
 import {CacheItem} from './cache-item';
 
@@ -12,12 +13,16 @@ export class CacheSw {
     app: CacheItem;
     tiles: CacheItem;
 
+    cleaner: CacheCleaner;
+
     constructor(public controlExtentions: string[]) {
         const appCacheName = new CacheName('app', self.APP_VERSION);
         this.app = new CacheItem(appCacheName);
 
         const tilesCacheName = new CacheName('tiles', self.TILES_VERSION);
         this.tiles = new CacheItem(tilesCacheName, '/tiles');
+
+        this.cleaner = new CacheCleaner(this);
     }
 
     async get(strategy: TGetFromCacheStrategy, key, req, pathname, throwError = false): Promise<Response | undefined> {
@@ -70,86 +75,8 @@ export class CacheSw {
         self.log('pre-caching completed');
     }
 
-    //region Clear cache
-
-    /**
-     * Очищать кеш необходимо ввиду следующих причин:
-     *   - может измениться формат имени кеша;
-     *   - кеш может устареть (версия поменяется).
-     *
-     * Например, в какой-то момент времени может оказаться, что приложение хранит кеши с вот такими именами:
-     var cacheNames = [
-     "/:ap",
-     "/:app:",
-     "/:app:v222",
-     "/:appchxi:v222",
-     "/:app:v333",
-     "/:app:v333:",
-     "/:tiles:12",
-     "/:tiles:v222",
-     "/:tiles:v333",
-     "/:tiles - v12",
-     "v111",
-     ":app:",
-     "/test:tiles:v111",
-     "Dfge73.32._sgjdsd",
-     "",
-     "/:тайлы:18",
-     "мой кеш",
-     ]
-     */
-    async clear(strategy: TCacheClearStrategy): Promise<void>  {
-        self.log('cache clearing…');
-
-        let checkList = await this.deleteByStrategy(strategy);
-        if (checkList.length) {
-            // натыкался на кейс: иногда кеш не удаляется, а очищается, поэтому предпринимаю вторую попытку
-            checkList = await this.deleteByStrategy(strategy);
-            if (checkList.length) {
-                checkList.forEach(name =>
-                    self.logError(`can't delete cache '${name}', 2 attempts were made`)
-                );
-            }
-        }
-        self.log('cache clearing completed');
+    clean(strategy: TCacheCleanStrategy): Promise<void>  {
+        return this.cleaner.clean(strategy);
     }
 
-    async deleteByStrategy(strategy: TCacheClearStrategy): Promise<string[]> {
-        const badNames = await this.getBadNames(strategy);
-        return Promise.all(
-            badNames.map(cacheName => {
-                self.log(`delete cache '${cacheName}'`);
-                return self.caches.delete(cacheName);
-            })
-        ).then(() => this.getBadNames(strategy)); // если все удалилось, то список BadNames должен быть пуст!
-    }
-
-    async getBadNames(strategy: TCacheClearStrategy): Promise<string[]> {
-        const cacheNames = await self.caches.keys();
-        switch (strategy) {
-            /**
-             * Кеши, которые гарантированно не могут контролироваться данным sw.
-             * ВНИМАНИЕ! Стратегия подойдет, если к origin привязан только один sw,
-             *           иначе вы удалите кеш, принадлежащий другим sw этого origin
-             */
-            case 'not-controlled':
-                const expectedTitleVersion = this.items().map(
-                    item => item.cacheName.parsed.titleVersion
-                );
-                return cacheNames
-                    .map(cacheName => CacheName.parse(cacheName))
-                    .filter(
-                        parsed =>
-                            !CacheName.isStructureValid(parsed) ||
-                            parsed.scope !== self.SCOPE ||
-                            !expectedTitleVersion.includes(parsed.titleVersion)
-                    )
-                    .map(parsed => parsed.cacheName);
-            default:
-                const errMessage = `sw unknown strategy '${strategy}' of Cache.getValue(…)`;
-                throw new Error(errMessage);
-        }
-    }
-
-    //endregion
 }

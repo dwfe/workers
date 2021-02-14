@@ -1,4 +1,3 @@
-
 declare const self: IServiceWorkerGlobalScope;
 
 /**
