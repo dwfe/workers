@@ -3,13 +3,7 @@ self.TILES_VERSION = "v1";
 self.SCOPE = "/";
 self.isDebug = true;
 
-importScripts(
-  "/sw/common.sw.js",
-  "/sw/cache-name.sw.js",
-  "/sw/cache-item.sw.js",
-  "/sw/cache.sw.js",
-  "/sw/exchange.sw.js"
-);
+importScripts("module.sw.js");
 
 const cache = new Cache(["js", "css", "woff2", "ttf", "otf", "eot"]);
 const exchange = new Exchange(cache);
