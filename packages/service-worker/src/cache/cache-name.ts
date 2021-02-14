@@ -1,3 +1,4 @@
+
 declare const self: IServiceWorkerGlobalScope;
 
 /**
@@ -30,7 +31,7 @@ export class CacheName {
         this.parsed = CacheName.parse(this.value);
     }
 
-    getInfo() {
+    info() {
         return {
             scope: self.SCOPE,
             title: this.title,

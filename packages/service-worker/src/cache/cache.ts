@@ -1,4 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
+import {TCacheClearStrategy, TGetFromCacheStrategy} from './сontract'
 import {CacheName} from './cache-name';
 import {CacheItem} from './cache-item';
 
@@ -6,7 +7,7 @@ import {CacheItem} from './cache-item';
  * - знает обо всех кешах приложения
  * - умеет получать/сохранять/обслуживать данные этих кешей
  */
-export class Cache {
+export class CacheSw {
 
     app: CacheItem;
     tiles: CacheItem;
@@ -19,8 +20,8 @@ export class Cache {
         this.tiles = new CacheItem(tilesCacheName, '/tiles');
     }
 
-    async get(strategy, key, req, pathname, throwError = false) {
-        const cacheItem = this.getItem(pathname);
+    async get(strategy: TGetFromCacheStrategy, key, req, pathname, throwError = false): Promise<Response | undefined> {
+        const cacheItem = this.item(pathname);
         switch (strategy) {
             case 'cache || fetch -> cache':
                 return cacheItem.get(key, req, pathname, throwError);
@@ -30,20 +31,20 @@ export class Cache {
         }
     }
 
-    getItem(pathname) {
+    item(pathname): CacheItem {
         if (this.tiles.match(pathname)) return this.tiles;
         return this.app;
     }
 
-    getItems() {
+    items(): CacheItem[] {
         return [this.app, this.tiles];
     }
 
-    async getInfo() {
-        return Promise.all(this.getItems().map(item => item.getInfo()));
+    getInfo(): Promise<any> {
+        return Promise.all(this.items().map(item => item.info()));
     }
 
-    isControl(url) {
+    isControl(url): boolean {
         if (url.origin !== self.location.origin) return false;
         const pathname = url.pathname;
 
@@ -59,7 +60,7 @@ export class Cache {
         return this.controlExtentions.includes(ext);
     }
 
-    async precache(strategy, pathnames, throwError = false) {
+    async precache(strategy: TGetFromCacheStrategy, pathnames, throwError = false): Promise<void> {
         self.log(`pre-caching [${pathnames.length}] files…`);
         await Promise.all(
             pathnames.map(pathname =>
@@ -97,10 +98,9 @@ export class Cache {
      "мой кеш",
      ]
      */
-    async clear() {
+    async clear(strategy: TCacheClearStrategy): Promise<void>  {
         self.log('cache clearing…');
 
-        const strategy = 'not-controlled';
         let checkList = await this.deleteByStrategy(strategy);
         if (checkList.length) {
             // натыкался на кейс: иногда кеш не удаляется, а очищается, поэтому предпринимаю вторую попытку
@@ -114,7 +114,7 @@ export class Cache {
         self.log('cache clearing completed');
     }
 
-    async deleteByStrategy(strategy) {
+    async deleteByStrategy(strategy: TCacheClearStrategy): Promise<string[]> {
         const badNames = await this.getBadNames(strategy);
         return Promise.all(
             badNames.map(cacheName => {
@@ -124,16 +124,16 @@ export class Cache {
         ).then(() => this.getBadNames(strategy)); // если все удалилось, то список BadNames должен быть пуст!
     }
 
-    async getBadNames(strategy) {
+    async getBadNames(strategy: TCacheClearStrategy): Promise<string[]> {
         const cacheNames = await self.caches.keys();
         switch (strategy) {
             /**
              * Кеши, которые гарантированно не могут контролироваться данным sw.
-             * ВНИМАНИЕ! Данная стратегия подойдет, если к origin привязан только один sw,
+             * ВНИМАНИЕ! Стратегия подойдет, если к origin привязан только один sw,
              *           иначе вы удалите кеш, принадлежащий другим sw этого origin
              */
             case 'not-controlled':
-                const expectedTitleVersion = this.getItems().map(
+                const expectedTitleVersion = this.items().map(
                     item => item.cacheName.parsed.titleVersion
                 );
                 return cacheNames

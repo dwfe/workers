@@ -1,12 +1,12 @@
 declare const self: IServiceWorkerGlobalScope;
-import {Cache} from './cache/cache';
+import {CacheSw} from './cache/cache';
 
 /**
  * Отвечает за обработку/обмен сообщениями
  * между сервис воркером и его клиентами
  */
-export class Exchange {
-    constructor(public cache: Cache) {
+export class ExchangeSw {
+    constructor(public cache: CacheSw) {
     }
 
     async send(type, data) {

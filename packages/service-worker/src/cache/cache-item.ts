@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {CacheName} from './cache-name';
+import {CacheName} from './cache-name'
 
 /**
  * Сущность, которая:
@@ -9,8 +9,6 @@ import {CacheName} from './cache-name';
 export class CacheItem {
     constructor(public cacheName: CacheName,
                 public pathStart?: string) {
-        this.cacheName = cacheName;
-        this.pathStart = pathStart;
     }
 
     /**
@@ -19,8 +17,8 @@ export class CacheItem {
      *   = найдено -> отдать браузеру
      *   = не найдено -> запросить сервер -> сохранить в кеш -> отдать браузеру
      */
-    async get(key, req, pathname, throwError) {
-        const cache = await this.getCache();
+    async get(key, req, pathname, throwError): Promise<Response | undefined> {
+        const cache = await this.cache();
         return (
             (await cache.match(key)) ||
             fetch(req).then(resp => {
@@ -36,19 +34,19 @@ export class CacheItem {
         );
     }
 
-    async getCache() {
+    cache(): Promise<Cache> {
         return self.caches.open(this.cacheName.value);
     }
 
-    async getInfo() {
+    async info() {
         return {
-            cacheName: this.cacheName.getInfo(),
-            length: await this.getLength()
+            cacheName: this.cacheName.info(),
+            length: await this.length()
         };
     }
 
-    async getLength() {
-        const keys = await this.getCache().then(cache => cache.keys());
+    async length() {
+        const keys = await this.cache().then(cache => cache.keys());
         return keys.length;
     }
 

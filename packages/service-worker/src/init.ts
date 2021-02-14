@@ -1,11 +1,11 @@
 declare const self: IServiceWorkerGlobalScope;
-import {Cache} from './cache/cache';
-import {Exchange} from './exchange';
+import {CacheSw} from './cache/cache';
+import {ExchangeSw} from './exchange';
 
 export class Init {
     constructor() {
-        self.Cache = Cache;
-        self.Exchange = Exchange;
+        self.Cache = CacheSw;
+        self.Exchange = ExchangeSw;
 
         self.log = (...args) => {
             if (self.isDebug) {
