@@ -1,8 +1,8 @@
 declare const self: IServiceWorkerGlobalScope;
-import {TCacheCleanStrategy, TGetFromCacheStrategy} from './сontract'
-import {CacheCleaner} from './cache-cleaner';
-import {CacheName} from './cache-name';
-import {CacheItem} from './cache-item';
+import {ICacheItemsContainer, TCacheCleanStrategy, TGetFromCacheStrategy} from './сontract'
+import {CacheContainer} from './cache.container'
+import {CacheCleaner} from './cache.cleaner';
+import {CacheItem} from './cache.item';
 
 /**
  * - знает обо всех кешах приложения
@@ -10,18 +10,11 @@ import {CacheItem} from './cache-item';
  */
 export class CacheSw {
 
-    app: CacheItem;
-    tiles: CacheItem;
-
+    container: ICacheItemsContainer;
     cleaner: CacheCleaner;
 
     constructor(public controlExtentions: string[]) {
-        const appCacheName = new CacheName('app', self.APP_VERSION);
-        this.app = new CacheItem(appCacheName);
-
-        const tilesCacheName = new CacheName('tiles', self.TILES_VERSION);
-        this.tiles = new CacheItem(tilesCacheName, '/tiles');
-
+        this.container = new CacheContainer();
         this.cleaner = new CacheCleaner(this);
     }
 
@@ -37,12 +30,11 @@ export class CacheSw {
     }
 
     item(pathname): CacheItem {
-        if (this.tiles.match(pathname)) return this.tiles;
-        return this.app;
+        return this.container.item(pathname);
     }
 
     items(): CacheItem[] {
-        return [this.app, this.tiles];
+        return this.container.items();
     }
 
     getInfo(): Promise<any> {
@@ -58,7 +50,7 @@ export class CacheSw {
         else if (
             pathname.startsWith('/static') ||
             pathname.startsWith('/fonts') ||
-            this.tiles.match(pathname)
+            this.container.match(pathname)
         )
             return true;
         const ext = pathname.split('.').pop();

@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {CacheName} from './cache-name'
+import {CacheName} from './cache.name'
 
 /**
  * Сущность, которая:
@@ -50,7 +50,7 @@ export class CacheItem {
         return keys.length;
     }
 
-    match(pathname) {
+    match(pathname): boolean {
         return this.pathStart ? pathname.startsWith(this.pathStart) : false;
     }
 

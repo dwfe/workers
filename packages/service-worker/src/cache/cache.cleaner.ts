@@ -1,6 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
 import {TCacheCleanStrategy} from './сontract';
-import {CacheName} from './cache-name';
+import {CacheName} from './cache.name';
 import {CacheSw} from './cache';
 
 /**
