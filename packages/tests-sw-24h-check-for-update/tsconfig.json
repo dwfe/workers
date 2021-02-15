@@ -1,8 +1,0 @@
-{
-  "extends": "../../config/tsconfig",
-  "compilerOptions": {
-    "outDir": "./dist/esm",
-    "declarationDir": "./dist/types",
-    "baseUrl": "."
-  }
-}
