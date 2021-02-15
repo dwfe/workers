@@ -13,20 +13,36 @@ export class CacheSw {
     container: ICacheItemsContainer;
     cleaner: CacheCleaner;
 
-    constructor(public controlExtentions: string[]) {
+    constructor(public controlExtentions: string[] = []) {
         this.container = new CacheContainer();
         this.cleaner = new CacheCleaner(this);
     }
 
-    async get(strategy: TGetFromCacheStrategy, key, req, pathname, throwError = false): Promise<Response | undefined> {
-        const cacheItem = this.item(pathname);
+    get(strategy: TGetFromCacheStrategy, key, req, pathname, throwError = false): Promise<Response | undefined> {
+        const item = this.item(pathname);
         switch (strategy) {
             case 'cache || fetch -> cache':
-                return cacheItem.get(key, req, pathname, throwError);
+                return item.get(key, req, pathname, throwError);
             default:
                 const errMessage = `sw unknown strategy '${strategy}' of Cache.getValue(…)`;
                 throw new Error(errMessage);
         }
+    }
+
+    isControl(url: URL): boolean {
+      if (url.origin !== self.location.origin) return false;
+      const pathname = url.pathname;
+
+      if (pathname.includes('sw.js') || pathname.includes('index.html'))
+        return false;
+      else if (
+        pathname.startsWith('/static') ||
+        pathname.startsWith('/fonts') ||
+        this.container.isControl(url)
+      )
+        return true;
+      const ext = pathname.split('.').pop();
+      return ext ? this.controlExtentions.includes(ext): false;
     }
 
     item(pathname): CacheItem {
@@ -37,24 +53,8 @@ export class CacheSw {
         return this.container.items();
     }
 
-    getInfo(): Promise<any> {
+    info(): Promise<any> {
         return Promise.all(this.items().map(item => item.info()));
-    }
-
-    isControl(url): boolean {
-        if (url.origin !== self.location.origin) return false;
-        const pathname = url.pathname;
-
-        if (pathname.includes('sw.js') || pathname.includes('index.html'))
-            return false;
-        else if (
-            pathname.startsWith('/static') ||
-            pathname.startsWith('/fonts') ||
-            this.container.match(pathname)
-        )
-            return true;
-        const ext = pathname.split('.').pop();
-        return this.controlExtentions.includes(ext);
     }
 
     async precache(strategy: TGetFromCacheStrategy, pathnames, throwError = false): Promise<void> {

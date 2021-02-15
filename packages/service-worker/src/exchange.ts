@@ -22,7 +22,7 @@ export class ExchangeSw {
         switch (data.type) {
             case "GET_INFO":
                 this.send("INFO", {
-                    caches: await this.cache.getInfo()
+                    caches: await this.cache.info()
                 });
                 break;
             default:

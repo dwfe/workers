@@ -9,6 +9,6 @@ export interface ICacheItemsContainer {
 
   items(): CacheItem[];
 
-  match(pathname): boolean;
+  isControl(url: URL): boolean;
 
 }

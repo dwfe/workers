@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -b",
-    "prod": "webpack --config ./dist/esm/webpack/config.js"
+    "clean": "rimraf ./dist",
+    "build": "npm run clean && tsc -b",
+    "prod": "npm run build && webpack --config ./dist/esm/webpack/config.js"
   },
   "devDependencies": {
     "@types/node": "12",

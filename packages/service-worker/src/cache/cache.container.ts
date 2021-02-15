@@ -25,8 +25,8 @@ export class CacheContainer implements ICacheItemsContainer {
     return [this.app, this.tiles];
   }
 
-  match(pathname): boolean {
-    return this.tiles.match(pathname);
+  isControl(url: URL): boolean {
+    return this.tiles.match(url.pathname);
   }
 
 }
