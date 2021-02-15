@@ -1,6 +1,8 @@
 declare const self: IServiceWorkerGlobalScope;
 import {
   ICacheContainer,
+  IGetFromCache,
+  IGetFromCacheItem,
   TCacheCleanStrategy,
   TGetFromCacheStrategy
 } from "./сontract";
@@ -15,23 +17,6 @@ export class CacheSw {
   constructor(public controlExtentions: string[] = []) {
     this.container = new CacheContainer();
     this.cleaner = new CacheCleaner(this);
-  }
-
-  get(
-    strategy: TGetFromCacheStrategy,
-    key,
-    req,
-    pathname,
-    throwError = false
-  ): Promise<Response | undefined> {
-    const item = this.item(pathname);
-    switch (strategy) {
-      case "cache || fetch -> cache":
-        return item.get(key, req, pathname, throwError);
-      default:
-        const errMessage = `sw unknown strategy '${strategy}' of Cache.getValue(…)`;
-        throw new Error(errMessage);
-    }
   }
 
   isControl(url: URL): boolean {
@@ -50,6 +35,46 @@ export class CacheSw {
     return ext ? this.controlExtentions.includes(ext) : false;
   }
 
+  get(
+    strategy: TGetFromCacheStrategy,
+    args: IGetFromCache
+  ): Promise<Response | undefined> {
+    return this.getFromCacheItem(strategy, CacheItem.convert(args));
+  }
+
+  getFromCacheItem(
+    strategy: TGetFromCacheStrategy,
+    data: IGetFromCacheItem
+  ): Promise<Response | undefined> {
+    const item = this.item(data.url.pathname);
+    switch (strategy) {
+      case "cache || fetch -> cache":
+        return item.get(data);
+      default:
+        const errMessage = `sw unknown strategy '${strategy}' of Cache.getValue(…)`;
+        throw new Error(errMessage);
+    }
+  }
+
+  async precache(
+    strategy: TGetFromCacheStrategy,
+    paths: string[],
+    throwError = false
+  ): Promise<void> {
+    self.log(`pre-caching [${paths.length}] files by '${strategy}' strategy…`);
+    await Promise.all(
+      paths
+        .map(str => CacheItem.convert({ str, throwError }))
+        .filter(data => this.isControl(data.url))
+        .map(data => this.getFromCacheItem(strategy, data))
+    );
+    self.log("pre-caching completed");
+  }
+
+  clean(strategy: TCacheCleanStrategy): Promise<void> {
+    return this.cleaner.clean(strategy);
+  }
+
   item(pathname: string): CacheItem {
     return this.container.item(pathname);
   }
@@ -60,25 +85,5 @@ export class CacheSw {
 
   info(): Promise<any> {
     return this.container.info();
-  }
-
-  async precache(
-    strategy: TGetFromCacheStrategy,
-    pathnames,
-    throwError = false
-  ): Promise<void> {
-    self.log(
-      `pre-caching [${pathnames.length}] files by '${strategy}' strategy…`
-    );
-    await Promise.all(
-      pathnames.map(pathname =>
-        this.get(strategy, pathname, pathname, pathname, throwError)
-      )
-    );
-    self.log("pre-caching completed");
-  }
-
-  clean(strategy: TCacheCleanStrategy): Promise<void> {
-    return this.cleaner.clean(strategy);
   }
 }

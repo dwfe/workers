@@ -40,10 +40,8 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const req = event.request;
   const url = new URL(req.url);
-  if (cache.isControl(url)) {
-    event.respondWith(
-      cache.get("cache || fetch -> cache", req, req, url.pathname)
-    );
+  if (req.method === "GET" && cache.isControl(url)) {
+    event.respondWith(cache.get("cache || fetch -> cache", { req }));
   }
 });
 
