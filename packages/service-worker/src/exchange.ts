@@ -1,42 +1,42 @@
 declare const self: IServiceWorkerGlobalScope;
-import {CacheSw} from './cache/cache';
+import { IMessageEvent, MessageType } from "./cache/сontract";
+import { CacheSw } from "./cache/cache";
 
 /**
  * Отвечает за обработку/обмен сообщениями
  * между сервис воркером и его клиентами
  */
 export class ExchangeSw {
-    constructor(public cache: CacheSw) {
-    }
+  constructor(public cache: CacheSw) {}
 
-    async send(type, data) {
-        const clients = await self.clients.matchAll();
-        this.log(`send '${type}' to [${clients.length}] clients…`);
-        clients.forEach(client => client.postMessage({ type, data }));
-    }
+  async send(type: MessageType, data) {
+    const clients = await self.clients.matchAll();
+    this.log(`send '${type}' to [${clients.length}] clients…`);
+    clients.forEach(client => client.postMessage({ type, data }));
+  }
 
-    async process(event) {
-        const { data } = event;
-        this.log(`process '${data.type}'`);
+  async process(event: IMessageEvent) {
+    const { data } = event;
+    this.log(`process '${data.type}'`);
 
-        switch (data.type) {
-            case "GET_INFO":
-                this.send("INFO", {
-                    caches: await this.cache.info()
-                });
-                break;
-            default:
-                throw new Error(
-                    `sw unknown message type '${data.type}' of Exchange.process(…)`
-                );
-        }
+    switch (data.type) {
+      case "GET_INFO":
+        this.send("INFO", {
+          caches: await this.cache.info()
+        });
+        break;
+      default:
+        throw new Error(
+          `sw unknown message type '${data.type}' of Exchange.process(…)`
+        );
     }
+  }
 
-    log(...args) {
-        self.log("exchange", ...args);
-    }
+  log(...args) {
+    self.log("exchange", ...args);
+  }
 
-    logError(...args) {
-        self.logError("exchange", ...args);
-    }
+  logError(...args) {
+    self.logError("exchange", ...args);
+  }
 }

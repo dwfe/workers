@@ -4,9 +4,8 @@ self.SCOPE = "/";
 self.isDebug = true;
 
 importScripts("module.sw.js");
-
-const cache = new Cache(["js", "css", "woff2", "ttf", "otf", "eot"]);
-const exchange = new Exchange(cache);
+const cache = new CacheSw(["js", "css", "woff2", "ttf", "otf", "eot"]);
+const exchange = new ExchangeSw(cache);
 
 self.addEventListener("install", event => {
   self.log("installing…");
@@ -29,8 +28,9 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   self.log("activating…");
   event.waitUntil(
-    self.clients.claim() // переключить всех клиентов на этот новый sw
-      .then(() => cache.clear()) // клиенты уже смотрят на новый sw, значит можно почистить кеш
+    self.clients
+      .claim() // переключить всех клиентов на этот новый sw
+      .then(() => cache.clean("not-controlled")) // клиенты уже смотрят на новый sw, значит можно почистить кеш
       .then(() => self.delay(5_000))
       .then(() => exchange.send("RELOAD_PAGE"))
       .then(() => self.log("activated"))

@@ -1,7 +1,7 @@
 declare const self: IServiceWorkerGlobalScope;
-import {TCacheCleanStrategy} from './сontract';
-import {CacheName} from './cache.name';
-import {CacheSw} from './cache';
+import { TCacheCleanStrategy } from "./сontract";
+import { CacheName } from "./cache.name";
+import { CacheSw } from "./cache";
 
 /**
  * Очищать кеш необходимо ввиду следующих причин:
@@ -30,12 +30,10 @@ import {CacheSw} from './cache';
  *  ];
  */
 export class CacheCleaner {
+  constructor(private cache: CacheSw) {}
 
-  constructor(private cache: CacheSw) {
-  }
-
-  async clean(strategy: TCacheCleanStrategy): Promise<void>  {
-    self.log('cache cleaning…');
+  async clean(strategy: TCacheCleanStrategy): Promise<void> {
+    self.log(`cache cleaning by '${strategy}' strategy…`);
 
     let checkList = await this.remove(strategy);
     if (checkList.length) {
@@ -43,11 +41,13 @@ export class CacheCleaner {
       checkList = await this.remove(strategy);
       if (checkList.length) {
         checkList.forEach(cacheName =>
-          self.logError(`can't delete cache '${cacheName}', 2 attempts were made`)
+          self.logError(
+            `can't delete cache '${cacheName}', 2 attempts were made`
+          )
         );
       }
     }
-    self.log('cache cleaning completed');
+    self.log("cache cleaning completed");
   }
 
   private async remove(strategy: TCacheCleanStrategy): Promise<string[]> {
@@ -68,10 +68,10 @@ export class CacheCleaner {
        * ВНИМАНИЕ! Стратегия подойдет, если к origin привязан только один sw,
        *           иначе вы удалите кеш, принадлежащий другим sw этого origin
        */
-      case 'not-controlled':
-        const expectedTitleVersion = this.cache.items().map(
-          item => item.cacheName.parsed.titleVersion
-        );
+      case "not-controlled":
+        const expectedTitleVersion = this.cache
+          .items()
+          .map(item => item.cacheName.parsed.titleVersion);
         return cacheNames
           .map(cacheName => CacheName.parse(cacheName))
           .filter(
@@ -82,7 +82,7 @@ export class CacheCleaner {
           )
           .map(parsed => parsed.cacheName);
       default:
-        const errMessage = `sw unknown strategy '${strategy}' of Cache.getValue(…)`;
+        const errMessage = `sw unknown strategy '${strategy}' of CacheCleaner.getBadNames(…)`;
         throw new Error(errMessage);
     }
   }

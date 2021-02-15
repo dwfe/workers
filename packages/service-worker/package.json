@@ -5,7 +5,8 @@
   "scripts": {
     "clean": "rimraf ./dist",
     "build": "npm run clean && tsc -b",
-    "prod": "npm run build && webpack --config ./dist/esm/webpack/config.js"
+    "dev": "npm run build && webpack --config ./dist/esm/webpack/config.dev.js",
+    "prod": "npm run build && webpack --config ./dist/esm/webpack/config.prod.js"
   },
   "devDependencies": {
     "@types/node": "12",

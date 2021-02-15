@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+  </head>
+  <body>
+    <script>
+      if (window.isSecureContext) {
+        const registrations = new Map();
+
+        // при первой установке sw на клиенте еще нет
+        const isFirstInstall = !(
+          navigator.serviceWorker.controller instanceof ServiceWorker
+        );
+
+        navigator.serviceWorker
+          .register("/sw.js", { scope: "/" })
+          .then(reg => {
+            registrations.set(reg.scope, reg);
+            console.log(`sw[main] registered, scope: '${reg.scope}'`);
+          })
+          .catch(err => console.error("sw[main] registration error", err));
+
+        navigator.serviceWorker.addEventListener("message", ({ data }) => {
+          if (data.type === "RELOAD_PAGE" && !isFirstInstall) {
+            window.location.reload(); // выполнить принудительную перезагрузку всех открытых окон приложения пользователя
+          }
+        });
+
+        setInterval(() => {
+          const hour = new Date().getHours();
+          if (hour >= 1 && hour <= 4) {
+            Array.from(registrations).forEach(([scope, reg], i) => {
+              reg.update();
+              console.log(
+                `sw[main] check for update, scope: '${
+                  reg.scope
+                }', ${new Date()}`
+              );
+            });
+          }
+        }, 1000 * 60 * 60); // каждый час
+      }
+    </script>
+  </body>
+</html>
