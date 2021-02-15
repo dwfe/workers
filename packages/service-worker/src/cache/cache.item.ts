@@ -29,7 +29,7 @@ export class CacheItem {
     const cache = await this.cache();
     return (
       (await cache.match(cacheKey)) ||
-      fetch(req).then(resp => {
+      self.timeout(self.connectionTimeout,fetch(req)).then(resp => {
         if (resp.ok) {
           cache.put(cacheKey, resp.clone());
           this.log(logId);

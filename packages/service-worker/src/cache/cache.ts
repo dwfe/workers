@@ -67,7 +67,8 @@ export class CacheSw {
         .map(str => CacheItem.convert({ str, throwError }))
         .filter(data => this.isControl(data.url))
         .map(data => this.getFromCacheItem(strategy, data))
-    );
+    )
+      //.catch(ignoreErr=>{});
     self.log("pre-caching completed");
   }
 

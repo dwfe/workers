@@ -2,6 +2,7 @@ self.APP_VERSION = "v1";
 self.TILES_VERSION = "v1";
 self.SCOPE = "/";
 self.isDebug = true;
+self.connectionTimeout = 15_000;
 
 importScripts("module.sw.js");
 const cache = new CacheSw(["js", "css", "woff2", "ttf", "otf", "eot"]);
