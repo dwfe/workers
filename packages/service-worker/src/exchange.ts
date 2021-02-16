@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import { IMessageEvent, MessageType } from "./cache/сontract";
+import { IMessageEvent, MessageType } from "./сontract";
 import { CacheSw } from "./cache/cache";
 
 /**

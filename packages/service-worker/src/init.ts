@@ -20,29 +20,24 @@ export class Init {
       console.error("sw", ...args);
     };
 
-    self.delay = (ms): Promise<void> => {
-      return new Promise((resolve, reject) => {
-        setTimeout(resolve, ms);
-      });
-    };
+    self.delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
     self.timeout = (ms, promise): Promise<any> => {
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
-          reject(new Error('TIMEOUT'))
-        }, ms)
+          reject(new Error("TIMEOUT"));
+        }, ms);
 
         promise
           .then(value => {
-            clearTimeout(timer)
-            resolve(value)
+            clearTimeout(timer);
+            resolve(value);
           })
           .catch(reason => {
-            clearTimeout(timer)
-            reject(reason)
-          })
-      })
-    }
-
+            clearTimeout(timer);
+            reject(reason);
+          });
+      });
+    };
   }
 }

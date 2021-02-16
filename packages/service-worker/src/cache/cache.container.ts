@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import { ICacheContainer } from "./сontract";
+import { ICacheContainer } from "../сontract";
 import { CacheName } from "./cache.name";
 import { CacheItem } from "./cache.item";
 

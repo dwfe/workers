@@ -3,9 +3,10 @@ import {
   ICacheContainer,
   IGetFromCache,
   IGetFromCacheItem,
+  IPrecache,
   TCacheCleanStrategy,
   TGetFromCacheStrategy
-} from "./сontract";
+} from "../сontract";
 import { CacheContainer } from "./cache.container";
 import { CacheCleaner } from "./cache.cleaner";
 import { CacheItem } from "./cache.item";
@@ -37,9 +38,9 @@ export class CacheSw {
 
   get(
     strategy: TGetFromCacheStrategy,
-    args: IGetFromCache
+    data: IGetFromCache
   ): Promise<Response | undefined> {
-    return this.getFromCacheItem(strategy, CacheItem.convert(args));
+    return this.getFromCacheItem(strategy, CacheItem.convert(data));
   }
 
   getFromCacheItem(
@@ -56,19 +57,29 @@ export class CacheSw {
     }
   }
 
-  async precache(
-    strategy: TGetFromCacheStrategy,
-    paths: string[],
-    throwError = false
-  ): Promise<void> {
+  async precache(data: IPrecache): Promise<void> {
+    if (!data.paths.length) return;
+    const { strategy, paths, throwError, connectionTimeout } = data;
     self.log(`pre-caching [${paths.length}] files by '${strategy}' strategy…`);
-    await Promise.all(
-      paths
-        .map(str => CacheItem.convert({ str, throwError }))
-        .filter(data => this.isControl(data.url))
-        .map(data => this.getFromCacheItem(strategy, data))
-    )
-      //.catch(ignoreErr=>{});
+
+    const arr = paths
+      .map(path => CacheItem.convert({ path, connectionTimeout }))
+      .filter(data => this.isControl(data.url));
+
+    /**
+     * Для прекеша главное не скорость скачивания, а надежность.
+     * Поэтому очередь обрабатывается последовательно.
+     */
+    for (let i = 0; i < arr.length; i++) {
+      const data = arr[i];
+      try {
+        await this.getFromCacheItem(strategy, data);
+      } catch (err) {
+        const errMassage = `can't pre-cache '${data.logPart}', ${err.message}`;
+        if (throwError) throw new Error(errMassage);
+        self.logError(errMassage);
+      }
+    }
     self.log("pre-caching completed");
   }
 

@@ -1,8 +1,7 @@
-self.APP_VERSION = "v1";
+self.APP_VERSION = "v2";
 self.TILES_VERSION = "v1";
 self.SCOPE = "/";
 self.isDebug = true;
-self.connectionTimeout = 15_000;
 
 importScripts("module.sw.js");
 const cache = new CacheSw(["js", "css", "woff2", "ttf", "otf", "eot"]);
@@ -13,15 +12,20 @@ self.addEventListener("install", event => {
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
   event.waitUntil(
     cache
-      .precache("cache || fetch -> cache", [
-        "/worker.js",
-        "/fonts/BureausansLight.woff2",
-        "/fonts/Bureausans-Regular.woff2",
-        "/fonts/Bureausans-Bold.woff2",
-        "/fonts/Bureausans-Italic.woff2",
-        "/fonts/meteo/Bureausans_Meteo-Light.woff2",
-        "/fonts/PWF/PuansonWind.woff2"
-      ])
+      .precache({
+        strategy: "cache || fetch -> cache",
+        throwError: false,
+        connectionTimeout: 10_000,
+        paths: [
+          "/worker.js",
+          "/fonts/BureausansLight.woff2",
+          "/fonts/Bureausans-Regular.woff2",
+          "/fonts/Bureausans-Bold.woff2",
+          "/fonts/Bureausans-Italic.woff2",
+          "/fonts/meteo/Bureausans_Meteo-Light.woff2",
+          "/fonts/PWF/PuansonWind.woff2"
+        ]
+      })
       .then(() => self.log("installed"))
   );
 });

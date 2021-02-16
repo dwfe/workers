@@ -4,7 +4,6 @@ interface IServiceWorkerGlobalScope extends ServiceWorkerGlobalScope {
 
   SCOPE: string;
   isDebug: boolean;
-  connectionTimeout: number;
 
   CacheSw: any;
   ExchangeSw: any;
