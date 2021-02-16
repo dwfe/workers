@@ -33,31 +33,45 @@
 <script>
   if (window.isSecureContext) {
     const registrations = new Map();
-    const isFirstInstall = !(navigator.serviceWorker.controller instanceof ServiceWorker); // при первой установке sw на клиенте еще нет
+
+    // при первой установке sw на клиенте еще нет
+    const isFirstInstall = !(
+      navigator.serviceWorker.controller instanceof ServiceWorker
+    );
 
     navigator.serviceWorker
-      .register("/sw.js", {scope: "/"})
+      .register("/sw.js", { scope: "/" })
       .then(reg => {
         registrations.set(reg.scope, reg);
         console.log(`sw[main] registered, scope: '${reg.scope}'`);
       })
       .catch(err => console.error("sw[main] registration error", err));
 
-    navigator.serviceWorker.addEventListener("message", ({data}) => {
+    navigator.serviceWorker.addEventListener("message", ({ data }) => {
       if (data.type === "RELOAD_PAGE" && !isFirstInstall) {
         window.location.reload(); // выполнить принудительную перезагрузку всех открытых окон приложения пользователя
       }
     });
 
+    function checkForUpdate() {
+      Array.from(registrations).forEach(([scope, reg], i) => {
+        reg.update();
+        const message = `sw[main] check for update, scope: '${
+          reg.scope
+        }', ${new Date()}`;
+        console.log(message);
+      });
+    }
+
     setInterval(() => {
       const hour = new Date().getHours();
-      if (hour >= 1 && hour <= 4) {
-        Array.from(registrations).forEach(([scope, reg], i) => {
-          reg.update();
-          console.log(`sw[main] check for update, scope: '${reg.scope}', ${new Date()}`);
-        });
-      }
+      if (hour >= 1 && hour <= 4) checkForUpdate();
     }, 1000 * 60 * 60); // каждый час
+
+    // https://developers.google.com/web/updates/2018/07/page-lifecycle-api
+    document.addEventListener("resume", event => {
+      checkForUpdate();
+    });
 
     setTimeout(() => {
       navigator.serviceWorker.controller?.postMessage({type: "GET_INFO"})

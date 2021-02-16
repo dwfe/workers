@@ -1,4 +1,4 @@
-self.APP_VERSION = "v2";
+self.APP_VERSION = "v1";
 self.TILES_VERSION = "v1";
 self.SCOPE = "/";
 self.isDebug = true;

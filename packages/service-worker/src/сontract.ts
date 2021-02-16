@@ -13,10 +13,14 @@ export interface ICacheContainer {
   isControl(url: URL): boolean;
 }
 
+export interface ICacheCleaner {
+  clean(strategy: TCacheCleanStrategy): Promise<void>;
+}
+
 /**
  * Запросить из кеша можно двумя путями:
  *  1) req - передать Request, который был перехвачен в sw.onfetch
- *  2) path - передать какую-то произвольную строку запроса в пределах origin этого sw, например: "/worker.js", "/fonts/times.woff2"
+ *  2) path - передать строку запроса в пределах origin sw, например: "/worker.js", "/fonts/times.woff2"
  */
 export interface IGetFromCache {
   req?: Request;
@@ -30,9 +34,9 @@ export interface IGetFromCache {
 export interface IGetFromCacheItem {
   req: RequestInfo; // передается в fetch(req)
   cacheKey: RequestInfo; // ключ в кеше
-  logPart: string; // используется для логирования
   connectionTimeout?: number;
   url: URL; // url запроса
+  logPart: string; // используется для логирования
 }
 
 /**
@@ -51,7 +55,7 @@ export interface IGetFromCacheItem {
  */
 export interface IPrecache {
   strategy: TGetFromCacheStrategy;
-  paths: string[]; // список путей в пределах origin этого sw, например: "/worker.js", "/fonts/times.woff2"
+  paths: string[]; // список путей в пределах origin sw, например: "/worker.js", "/fonts/times.woff2"
   throwError?: boolean; // надо ли делать throw Error при ошибке, либо просто залогировать ее
   connectionTimeout?: number;
 }

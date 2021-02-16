@@ -1,5 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
 import {
+  ICacheCleaner,
   ICacheContainer,
   IGetFromCache,
   IGetFromCacheItem,
@@ -13,7 +14,7 @@ import { CacheItem } from "./cache.item";
 
 export class CacheSw {
   container: ICacheContainer;
-  cleaner: CacheCleaner;
+  cleaner: ICacheCleaner;
 
   constructor(public controlExtentions: string[] = []) {
     this.container = new CacheContainer();
@@ -52,7 +53,7 @@ export class CacheSw {
       case "cache || fetch -> cache":
         return item.get(data);
       default:
-        const errMessage = `sw unknown strategy '${strategy}' of Cache.getValue(…)`;
+        const errMessage = `sw unknown strategy '${strategy}' of Cache.getFromCacheItem(…)`;
         throw new Error(errMessage);
     }
   }

@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import { TCacheCleanStrategy } from "../сontract";
+import { ICacheCleaner, TCacheCleanStrategy } from "../сontract";
 import { CacheName } from "./cache.name";
 import { CacheSw } from "./cache";
 
@@ -29,7 +29,7 @@ import { CacheSw } from "./cache";
  *    "мой кеш",
  *  ];
  */
-export class CacheCleaner {
+export class CacheCleaner implements ICacheCleaner {
   constructor(private cache: CacheSw) {}
 
   async clean(strategy: TCacheCleanStrategy): Promise<void> {
@@ -40,11 +40,10 @@ export class CacheCleaner {
       // натыкался на кейс: иногда кеш не удаляется, а очищается, поэтому предпринимаю вторую попытку
       checkList = await this.remove(strategy);
       if (checkList.length) {
-        checkList.forEach(cacheName =>
-          self.logError(
-            `can't delete cache '${cacheName}', 2 attempts were made`
-          )
-        );
+        checkList.forEach(cacheName => {
+          const errMessage = `can't delete cache '${cacheName}', 2 attempts were made`;
+          self.logError(errMessage);
+        });
       }
     }
     self.log("cache cleaning completed");

@@ -29,7 +29,7 @@ export class CacheItem {
   private async fetchThenCache(
     data: IGetFromCacheItem
   ): Promise<Response | undefined> {
-    const { req, cacheKey, logPart, connectionTimeout } = data;
+    const { req, cacheKey, connectionTimeout, logPart } = data;
     return (connectionTimeout
       ? self.timeout(connectionTimeout, fetch(req))
       : fetch(req)
@@ -75,31 +75,28 @@ export class CacheItem {
    * Соответственно, если приходит string, то тут надо отработать аналогично Cache API -> собрать валидный ключ как URL.pathname + URL.search.
    * Такой более строгий подход уменьшает вероятность того, что в кеше могут появиться данные с неожиданными ключами.
    */
-  static convert({
-    req,
-    path,
-    connectionTimeout
-  }: IGetFromCache): IGetFromCacheItem {
+  static convert(data: IGetFromCache): IGetFromCacheItem {
+    let { req, path, connectionTimeout } = data;
     if (req) {
       const url = new URL(req.url);
       return {
         req,
         cacheKey: req,
-        logPart: `${url.pathname}${url.search}${url.hash}`,
         connectionTimeout,
-        url
+        url,
+        logPart: `${url.pathname}${url.search}${url.hash}`
       };
     } else if (path) {
       if (path.includes("http:") || path.includes("https:"))
         throw new Error(`path '${path}' невалиден`);
       path = path[0] === "/" ? path : `/${path}`; // добавить слеш при отсутствии
-      const url = new URL(self.location.origin + path); // path обязательно должен быть в пределах origin этого sw!
+      const url = new URL(self.location.origin + path); // path обязательно должен быть в пределах origin sw!
       return {
         req: url.href,
         cacheKey: `${url.pathname}${url.search}`, // точно такой же ключ формирует Cache API при "cacheKey: req"
-        logPart: `${url.pathname}${url.search}${url.hash}`,
         connectionTimeout,
-        url
+        url,
+        logPart: `${url.pathname}${url.search}${url.hash}`
       };
     }
     throw new Error(`can't convert data:IGetFromCache`);
