@@ -7,7 +7,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   private sender = new Subject<TSend>()
   private stopper = new Subject()
   private ctxType!: CtxType
-  private isDebug = false
+  public isDebug = false
 
   constructor(public readonly id: string,
               public readonly ctx: Ctx,
@@ -106,10 +106,6 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
         this.ctx.postMessage(message, transfer)
       }
     }
-  }
-
-  setDebug(value: boolean) {
-    this.isDebug = value
   }
 
   logPrefix = `ctx[${this.id}]:`
