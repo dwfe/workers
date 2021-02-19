@@ -1,5 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheName, IGetFromCache, IGetFromCacheItem, swCacheFetchInit} from '../../сontract';
+import {IServiceWorkerGlobalScope} from '../../../types';
 
 /**
  * Сущность, которая:

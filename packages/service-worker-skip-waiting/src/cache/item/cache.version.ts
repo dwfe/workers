@@ -1,5 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
 import {TCacheVersionReceivingMethod, TCacheVersionStore} from '../../сontract';
+import {IServiceWorkerGlobalScope} from '../../../types';
 import {TCacheTitle} from '../cache.container';
 
 /**

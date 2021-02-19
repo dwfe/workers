@@ -1,8 +1,9 @@
+declare const self: IServiceWorkerGlobalScope;
 import {ICacheName, TCacheVersionReceivingMethod, TCacheVersionStore} from '../../сontract';
+import {IServiceWorkerGlobalScope} from '../../../types';
 import {TCacheTitle} from '../cache.container';
 import {CacheVersion} from './cache.version';
 
-declare const self: IServiceWorkerGlobalScope;
 
 /**
  * Реализуется формат имени кеша следующего вида:

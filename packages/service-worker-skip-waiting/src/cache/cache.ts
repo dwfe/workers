@@ -1,5 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheCleaner, ICacheContainer, IGetFromCache, IGetFromCacheItem, IPrecache, TCacheCleanStrategy, TGetFromCacheStrategy} from '../сontract';
+import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
 import {CacheCleaner} from './cache.cleaner';
 import {CacheItem} from './item/cache.item';
