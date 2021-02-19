@@ -44,7 +44,7 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method === 'GET' && self.cache.isControl(url)) {
-    event.respondWith(cache.get('cache || fetch -> cache', {req}));
+    event.respondWith(self.cache.get('cache || fetch -> cache', {req}));
   }
 });
 
