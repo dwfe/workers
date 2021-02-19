@@ -1,3 +1,7 @@
+import {ICacheName, TCacheVersionReceivingMethod, TCacheVersionStore} from '../../сontract';
+import {TCacheTitle} from '../cache.container';
+import {CacheVersion} from './cache.version';
+
 declare const self: IServiceWorkerGlobalScope;
 
 /**
@@ -16,17 +20,21 @@ declare const self: IServiceWorkerGlobalScope;
  * Например, такие имена:
  *    /:app:34.189.0.1
  *    /:tiles:v1
- *    /test: приложение:version 18
+ *    /test: приложение : version 18
  */
-export class CacheName {
-  static DELIMITER = ":";
+export class CacheName implements ICacheName {
+  static DELIMITER = ':';
+
+  static of(title: TCacheTitle, store: TCacheVersionStore, receivingMethod?: TCacheVersionReceivingMethod): CacheName {
+    const version = new CacheVersion(title, store, receivingMethod).get();
+    return new CacheName(title, version);
+  }
 
   value: string;
-  parsed;
 
-  constructor(public title: string, public version: string) {
+  constructor(public title: TCacheTitle,
+              public version: string) {
     this.value = CacheName.get(title, version);
-    this.parsed = CacheName.parse(this.value);
   }
 
   info() {
@@ -42,27 +50,23 @@ export class CacheName {
     return `${self.SCOPE}${d}${title}${d}${version}`;
   }
 
+  static isValid(cacheName: string): boolean {
+    const parsed = CacheName.parse(cacheName);
+    return CacheName.isStructureValid(parsed) && parsed.scope === self.SCOPE;
+  }
+
+  static isStructureValid({scope, title, version, arr}): boolean {
+    return arr.length === 3 && !!scope && !!title && !!version;
+  }
+
   static parse(cacheName: string) {
     const arr = cacheName.split(CacheName.DELIMITER);
-    const scope = arr[0];
-    const title = arr[1];
-    const version = arr[2];
     return {
-      scope,
-      title,
-      version,
-      arr,
-      cacheName,
-      titleVersion: `${title}${CacheName.DELIMITER}${version}`
+      scope: arr[0],
+      title: arr[1],
+      version: arr[2],
+      arr
     };
   }
 
-  static isValid(cacheName): boolean {
-    const parsed = CacheName.parse(cacheName);
-    return CacheName.isStructureValid(parsed);
-  }
-
-  static isStructureValid({ scope, title, version, arr }): boolean {
-    return arr.length === 3 && !!scope && !!title && !!version;
-  }
 }

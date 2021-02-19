@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import {Sw} from '../Sw/Sw'
 import {CheckCachePut} from '../CheckCachePut/CheckCachePut';
+import {CheckGetFromAnotherScope} from '../CheckGetFromAnotherScope/CheckGetFromAnotherScope';
 
 function App() {
 
@@ -11,6 +12,7 @@ function App() {
       <header className="App-header">
         <Sw/>
         <CheckCachePut/>
+        <CheckGetFromAnotherScope/>
         <img src={logo} className="App-logo" alt="logo"/>
         <p>
           Edit <code>src/App.tsx</code> and save to reload.

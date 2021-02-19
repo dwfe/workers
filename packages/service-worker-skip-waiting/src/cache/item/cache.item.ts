@@ -1,6 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import { IGetFromCache, IGetFromCacheItem } from "../сontract";
-import { CacheName } from "./cache.name";
+import {ICacheName, IGetFromCache, IGetFromCacheItem, swCacheFetchInit} from '../../сontract';
 
 /**
  * Сущность, которая:
@@ -8,7 +7,9 @@ import { CacheName } from "./cache.name";
  *   - хранит дополнительную информацию об этом кеше
  */
 export class CacheItem {
-  constructor(public cacheName: CacheName, public pathStart?: string) {}
+  constructor(public cacheName: ICacheName,
+              public options?: { pathStart?: string }) {
+  }
 
   cache(): Promise<Cache> {
     return self.caches.open(this.cacheName.value);
@@ -26,13 +27,11 @@ export class CacheItem {
     return resp || this.fetchThenCache(data);
   }
 
-  private async fetchThenCache(
-    data: IGetFromCacheItem
-  ): Promise<Response | undefined> {
-    const { req, cacheKey, connectionTimeout, logPart } = data;
+  private async fetchThenCache(data: IGetFromCacheItem): Promise<Response | undefined> {
+    const {req, cacheKey, connectionTimeout, logPart} = data;
     return (connectionTimeout
-      ? self.timeout(connectionTimeout, fetch(req))
-      : fetch(req)
+        ? self.timeout(connectionTimeout, fetch(req, swCacheFetchInit))
+        : fetch(req, swCacheFetchInit)
     ).then(async resp => {
       if (resp.ok) {
         const cache = await this.cache();
@@ -40,8 +39,7 @@ export class CacheItem {
         this.log(logPart);
         return resp;
       }
-      const errMessage = `fetch '${logPart}', status: ${resp.status}`;
-      this.logError(errMessage);
+      this.logError(`fetch '${logPart}', status: ${resp.status}`);
     });
   }
 
@@ -57,8 +55,9 @@ export class CacheItem {
     return keys.length;
   }
 
-  match(pathname): boolean {
-    return this.pathStart ? pathname.startsWith(this.pathStart) : false;
+  match(url: URL): boolean {
+    const pathStart = this.options?.pathStart;
+    return pathStart ? url.pathname.startsWith(pathStart) : false;
   }
 
   log(...args) {
@@ -75,8 +74,7 @@ export class CacheItem {
    * Соответственно, если приходит string, то тут надо отработать аналогично Cache API -> собрать валидный ключ как URL.pathname + URL.search.
    * Такой более строгий подход уменьшает вероятность того, что в кеше могут появиться данные с неожиданными ключами.
    */
-  static convert(data: IGetFromCache): IGetFromCacheItem {
-    let { req, path, connectionTimeout } = data;
+  static convert({req, path, connectionTimeout}: IGetFromCache): IGetFromCacheItem {
     if (req) {
       const url = new URL(req.url);
       return {
@@ -87,9 +85,9 @@ export class CacheItem {
         logPart: `${url.pathname}${url.search}${url.hash}`
       };
     } else if (path) {
-      if (path.includes("http:") || path.includes("https:"))
-        throw new Error(`path '${path}' невалиден`);
-      path = path[0] === "/" ? path : `/${path}`; // добавить слеш при отсутствии
+      if (path.includes('http:') || path.includes('https:'))
+        throw new Error(`path '${path}' not valid because it has a protocol`);
+      path = path[0] === '/' ? path : `/${path}`; // добавить слеш при отсутствии
       const url = new URL(self.location.origin + path); // path обязательно должен быть в пределах origin sw!
       return {
         req: url.href,
@@ -99,6 +97,6 @@ export class CacheItem {
         logPart: `${url.pathname}${url.search}${url.hash}`
       };
     }
-    throw new Error(`can't convert data:IGetFromCache`);
+    throw new Error(`can't CacheItem.convert(data: IGetFromCache)`);
   }
 }

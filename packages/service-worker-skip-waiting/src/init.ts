@@ -1,6 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
-import { CacheSw } from "./cache/cache";
-import { ExchangeSw } from "./exchange";
+import {CacheSw} from './cache/cache';
+import {ExchangeSw} from './exchange';
 
 export class Init {
   static run() {
@@ -12,12 +12,12 @@ export class Init {
         // const date = new Date();
         // const dateISOStringCorrectTimeZone = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
         // console.log(`[${dateISOStringCorrectTimeZone}] sw `, ...args);
-        console.log("sw", ...args);
+        console.log('sw', ...args);
       }
     };
 
     self.logError = (...args) => {
-      console.error("sw", ...args);
+      console.error('sw', ...args);
     };
 
     self.delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -25,7 +25,7 @@ export class Init {
     self.timeout = (ms, promise): Promise<any> => {
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
-          reject(new Error("TIMEOUT"));
+          reject(new Error('TIMEOUT'));
         }, ms);
 
         promise

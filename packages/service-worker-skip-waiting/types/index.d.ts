@@ -1,7 +1,4 @@
 interface IServiceWorkerGlobalScope extends ServiceWorkerGlobalScope {
-  APP_VERSION: string;
-  TILES_VERSION: string;
-
   SCOPE: string;
   isDebug: boolean;
 
