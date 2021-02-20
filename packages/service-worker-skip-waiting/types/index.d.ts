@@ -1,18 +1,14 @@
-import {ModuleSw} from '../module.sw';
-import {CacheSw} from '../src/cache/cache';
-import {ExchangeSw} from '../src/exchange';
+import {Type} from 'src/сontract';
+import {SwEnv} from 'src/sw.env';
 
 interface IServiceWorkerGlobalScope extends ServiceWorkerGlobalScope {
-  cacheControlExtentions: string[];
-  SCOPE: string;
-  isDebug: boolean;
 
-  cache: CacheSw;
-  exchange: ExchangeSw;
-  ModuleSw: ModuleSw;
+  isDebug: boolean;
+  SwEnv: Type<SwEnv>;
 
   log: (...args) => void;
   logError: (...args) => void;
   delay: (ms: number) => Promise<void>;
   timeout: (ms: number, promise: Promise<any>) => Promise<any>;
+
 }

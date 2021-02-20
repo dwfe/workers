@@ -1,37 +1,3 @@
-# Ссылки
-
-[Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)  
-[Recipes by Google](https://googlechrome.github.io/samples/service-worker/)  
-[Cookbook by Mozilla](https://serviceworke.rs/)
-
-#### Jake Archibald
-
-- [Service Worker Lifecycle](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle)
-- [The Offline Cookbook](https://web.dev/offline-cookbook/)
-- [Different versions of your site can be running at the same time](https://jakearchibald.com/2020/multiple-versions-same-time/)
-- [Service workers and base URIs](https://jakearchibald.com/2016/service-workers-and-base-uris/)
-- [Speed up Service Worker with Navigation Preloads](https://developers.google.com/web/updates/2017/02/navigation-preload)
-
-#### Progressive Web Apps Training
-
-- [Introduction to Service Worker](https://developers.google.com/web/ilt/pwa/introduction-to-service-worker)
-- [Lab: Scripting the Service Worker](https://developers.google.com/web/ilt/pwa/lab-scripting-the-service-worker)
-- [Live Data in the Service Worker](https://developers.google.com/web/ilt/pwa/live-data-in-the-service-worker)
-- [Caching Files with Service Worker](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker)
-
-#### sw cache vs HTTP cache
-
-- [Prevent unnecessary network requests with the HTTP Cache](https://web.dev/http-cache/)
-
-#### habr
-
-- [Service Workers. Инструкция по применению](https://habr.com/ru/company/2gis/blog/345552/)
-- [Обновление вашего PWA в продакшене](https://habr.com/ru/post/535428/)
-- [Как мы запустили offline-версию сайта RG.RU](https://habr.com/ru/company/oleg-bunin/blog/348150/)
-- [Подводные камни Service Workers(когда надо использовать IndexedDB)](https://habr.com/ru/post/351194/)
-
-[Service workers and the Cache Storage API](https://web.dev/service-workers-cache-storage/)
-
 # Использование
 
 ```
@@ -80,15 +46,6 @@ self.isDebug = true;
 Переменная `isDebug` вкл/выкл вывод в консоль браузера информационных сообщений.  
 Переменная `SCOPE` хранит scope sw. Используется при определении имени кеша. Здесь задается вручную, чтобы было наглядно видно - этот `sw.js` работает на таком-то scope.
 
-А, вообще, реальный scope sw доступен в `self.registration.scope` и всегда включает origin. Предположим на origin `http://localhost:2020` зарегистрировано два sw для scope `/` и `/banana/`, полностью их scope выглядят так:
-
-- для sw#1 = `http://localhost:2020/`
-- для sw#2 = `http://localhost:2020/banana/`
-
-Браузер выбирает sw, основываясь на содержимом браузерной строки.  
-Например, пользователь перешел по пути `http://localhost:2020/banana/index.html`, значит браузер задействует sw#2, а следовательно **любая** сетевая активность пользователя начнет проходить через событие `fetch` sw#2, не важно захочет пользователь получить файл `/123.txt`, `/banana/123.txt` или `/какой/угодно/путь/123.txt`.  
-Если пользователь в браузерной строке перейдет по пути `http://localhost:2020/banana-apple/index.html` или `http://localhost:2020/index.html`, тогда браузер задействует sw#1, потому что `/banana-apple/` и `/` подпадают только под scope `http://localhost:2020/`.
-
 ## Скрипт `prod`
 
 1. Собирает `module.sw.js`
@@ -113,11 +70,87 @@ self.isDebug = true;
 
 # Особенности
 
-- на все данные, что мы хотим кешировать, сервер(если эти данные у него отсутствуют) должен возвращать корректную ошибку в HTTP status code. В противном случае, если сервер при отсутствии данных отдает, например, статус 200 + html страницу, где сообщается, что произошла такая-то ошибка, тогда в кеш вместо ожидаемого файла попадет эта самая страница. Соответственно, когда браузер вместо, скажем, шрифта получает содержимое html страницы, то приложение будет работать непредсказуемо. Варианты решения:
-  - положить файл в нужное место -> обновить sw.js, чтобы активировать на клиентах обновление кеша(т.к. кривота уже сохранена в кеше и появление файла на сервере не решит проблему);
-  - делать прекеш с привязкой к Content-Type, если не тот что ожидатся - не кешировать файл.
-- sw обновление на chrome. Если открыть и закрыть инспектор(иногда и без этих действий), то следующее обновление произойдет так:
-  - качается новая версия sw файла
-  - хром чего-то ждет **ровно** 5 минут
-  - запускает цикл обновления
+### Событие 'fetch' вызывается на одном sw всегда
 
+Scope sw доступен в `self.registration.scope` и всегда включает origin. Предположим на origin `http://localhost:2020` зарегистрировано два sw для scope `/` и `/banana/`, полностью их scope выглядят так:
+
+- для sw#1 = `http://localhost:2020/`
+- для sw#2 = `http://localhost:2020/banana/`
+
+Браузер выбирает sw, основываясь на содержимом браузерной строки.  
+Например, пользователь перешел по пути `http://localhost:2020/banana/index.html`, значит браузер задействует sw#2, а следовательно **любая** сетевая активность пользователя начнет проходить через событие `fetch` sw#2, не важно захочет пользователь получить файл `/123.txt`, `/banana/123.txt` или `/какой/угодно/путь/123.txt`.  
+Если пользователь в браузерной строке перейдет по пути `http://localhost:2020/banana-apple/index.html` или `http://localhost:2020/index.html`, тогда браузер задействует sw#1, потому что `/banana-apple/` и `/` подпадают только под scope `http://localhost:2020/`.
+
+### Сервис воркер способен работать даже при недоступном сайте
+
+После установки сервис воркер работает в браузере локально, даже если сейчас недоступен origin, с которого он был получен.  
+Например, sw был установлен с сайта https://my.site.ru.  
+Далее вы берете и отключаете сетевое соединение.  
+Закрываете браузер.  
+Точно можно сказать, что сервис воркер(sw) инициализируется после действий:
+
+- открыть браузер;
+- открыть консоль sw: `chrome://serviceworker-internals`;
+- в этот момент у всех sw браузера `Running Status: STOPPED`;
+- перейти на сайт https://my.site.ru
+
+Браузер вам говорит 'This site can’t be reached', но в консоле у sw сайта `Running Status: RUNNING`.   
+В хроме при таких условиях через 30 секунд его статус сменится на `STOPPED`.    
+Затем, если вкладка остается активной, то хром самостоятельно попытается его проинициализировать через: 1 мин., 1 мин., 1 мин., 4 мин. - но не могу сказать будет он дальше предпринимать попытки инициализации или нет.
+
+### Сервис воркер переводится в статус `STOPPED` при отсутствии активности в нем
+
+Через 30 секунд неактивности sw хром переводит его в статус `STOPPED`.  
+Затем, когда от sw захотят что-то получить, то хром заново инициализирует sw, то есть хром заново запускает содержимое файла `sw.js`.
+
+### Вместо 404 сайт отвечает 200+html с описанием ошибки
+
+На все данные, что мы хотим кешировать, сервер(если эти данные у него отсутствуют) должен возвращать корректную ошибку в HTTP status code.  
+В противном случае, если сервер при отсутствии данных отдает, например, статус 200 + html страницу, где сообщается, что произошла такая-то ошибка, тогда в кеш вместо ожидаемого файла попадет эта самая страница. Соответственно, когда браузер вместо, скажем, шрифта получает из кеша содержимое html страницы, то приложение будет работать непредсказуемо.  
+Варианты решения:
+
+- лучше всего, чтобы сервер отвечал 404;
+- положить файл в нужное место -> обновить sw.js, чтобы активировать на клиентах обновление кеша(т.к. кривота уже сохранена в кеше и появление файла на сервере не решит проблему);
+- делать прекеш с привязкой к Content-Type, если не тот что ожидатся - не кешировать файл.
+
+### Обновление на chrome
+
+Если открыть и закрыть инспектор(иногда и без этих действий), то следующее обновление произойдет так:
+
+- качается новая версия sw файла
+- хром чего-то ждет **ровно** 5 минут
+- запускает цикл обновления
+
+# Ссылки
+
+[Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)  
+[Recipes by Google](https://googlechrome.github.io/samples/service-worker/)  
+[Cookbook by Mozilla](https://serviceworke.rs/)
+
+#### Jake Archibald
+
+- [Service Worker Lifecycle](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle)
+- [The Offline Cookbook](https://web.dev/offline-cookbook/)
+- [Different versions of your site can be running at the same time](https://jakearchibald.com/2020/multiple-versions-same-time/)
+- [Service workers and base URIs](https://jakearchibald.com/2016/service-workers-and-base-uris/)
+- [Speed up Service Worker with Navigation Preloads](https://developers.google.com/web/updates/2017/02/navigation-preload)
+
+#### Progressive Web Apps Training
+
+- [Introduction to Service Worker](https://developers.google.com/web/ilt/pwa/introduction-to-service-worker)
+- [Lab: Scripting the Service Worker](https://developers.google.com/web/ilt/pwa/lab-scripting-the-service-worker)
+- [Live Data in the Service Worker](https://developers.google.com/web/ilt/pwa/live-data-in-the-service-worker)
+- [Caching Files with Service Worker](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker)
+
+#### sw cache vs HTTP cache
+
+- [Prevent unnecessary network requests with the HTTP Cache](https://web.dev/http-cache/)
+
+#### habr
+
+- [Service Workers. Инструкция по применению](https://habr.com/ru/company/2gis/blog/345552/)
+- [Обновление вашего PWA в продакшене](https://habr.com/ru/post/535428/)
+- [Как мы запустили offline-версию сайта RG.RU](https://habr.com/ru/company/oleg-bunin/blog/348150/)
+- [Подводные камни Service Workers(когда надо использовать IndexedDB)](https://habr.com/ru/post/351194/)
+
+[Service workers and the Cache Storage API](https://web.dev/service-workers-cache-storage/)

@@ -1,9 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheName, TCacheVersionReceivingMethod, TCacheVersionStore} from '../../сontract';
+import {ICacheName} from '../../сontract';
 import {IServiceWorkerGlobalScope} from '../../../types';
-import {TCacheTitle} from '../cache.container';
-import {CacheVersion} from './cache.version';
-
 
 /**
  * Реализуется формат имени кеша следующего вида:
@@ -26,34 +23,30 @@ import {CacheVersion} from './cache.version';
 export class CacheName implements ICacheName {
   static DELIMITER = ':';
 
-  static of(title: TCacheTitle, store: TCacheVersionStore, receivingMethod?: TCacheVersionReceivingMethod): CacheName {
-    const version = new CacheVersion(title, store, receivingMethod).get();
-    return new CacheName(title, version);
-  }
-
   value: string;
 
-  constructor(public title: TCacheTitle,
+  constructor(public scope: string,
+              public title: string,
               public version: string) {
-    this.value = CacheName.get(title, version);
+    this.value = CacheName.get(scope, title, version);
   }
 
   info() {
     return {
-      scope: self.SCOPE,
+      scope: this.scope,
       title: this.title,
       version: this.version
     };
   }
 
-  static get(title: string, version: string): string {
+  static get(scope: string, title: string, version: string): string {
     const d = CacheName.DELIMITER;
-    return `${self.SCOPE}${d}${title}${d}${version}`;
+    return `${scope}${d}${title}${d}${version}`;
   }
 
   static isValid(cacheName: string): boolean {
     const parsed = CacheName.parse(cacheName);
-    return CacheName.isStructureValid(parsed) && parsed.scope === self.SCOPE;
+    return CacheName.isStructureValid(parsed);
   }
 
   static isStructureValid({scope, title, version, arr}): boolean {

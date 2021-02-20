@@ -1,17 +1,47 @@
-self.APP_VERSION = 'v1';
-self.TILES_VERSION = 'v2';
-
-self.cacheControlExtentions = ['js', 'css', 'woff2', 'ttf', 'otf', 'eot'];
-self.SCOPE = '/';
 self.isDebug = true;
 importScripts('module.sw.js');
+
+const sw = new SwEnv('/', {
+  database: {
+    name: 'db_local'
+  },
+  cache: {
+    controlExtentions: ['js', 'css', 'woff2', 'ttf', 'otf', 'eot'],
+    itemVersionDBStoreName: 'cache_item_versions',
+    items: [
+      {
+        title: 'app',
+        version: {
+          value: 'v2'
+        },
+        match: {
+          order: 10,
+          pathStart: '/',
+          useInCacheControl: false
+        }
+      },
+      {
+        title: 'tiles',
+        version: {
+          value: 'v2'
+        },
+        match: {
+          order: 1,
+          pathStart: '/tiles',
+          useInCacheControl: true
+        }
+      }
+    ],
+  }
+});
+sw.init();
 
 self.addEventListener('install', event => {
   self.log('installing…');
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
   event.waitUntil(
-    self.ModuleSw.init()
-      .then(() => self.cache.precache({
+    sw.init()
+      .then(() => sw.cache.precache({
         strategy: 'cache || fetch -> cache',
         throwError: false,
         connectionTimeout: 10_000,
@@ -33,19 +63,25 @@ self.addEventListener('activate', event => {
   self.log('activating…');
   event.waitUntil(
     self.clients.claim() // переключить всех клиентов на этот новый sw
-      .then(() => self.cache.clean('uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
+      .then(() => sw.cache.clean('uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
       .then(() => self.delay(5_000))
-      .then(() => self.exchange.send('RELOAD_PAGE'))
+      .then(() => sw.exchange.send('RELOAD_PAGE'))
       .then(() => self.log('activated'))
   );
 });
 
 self.addEventListener('fetch', event => {
-  const req = event.request;
-  const url = new URL(req.url);
-  if (req.method === 'GET' && self.cache.isControl(url)) {
-    event.respondWith(self.cache.get('cache || fetch -> cache', {req}));
+  if (sw.isReady) {
+    const req = event.request;
+    const url = new URL(req.url);
+    if (req.method === 'GET' && sw.cache.isControl(url)) {
+      event.respondWith(sw.cache.get('cache || fetch -> cache', {req}));
+    }
   }
 });
 
-self.addEventListener('message', event => self.exchange.process(event));
+self.addEventListener('message', event => {
+  if (sw.isReady) {
+    sw.exchange.process(event);
+  }
+});

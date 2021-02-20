@@ -1,7 +1,7 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheCleaner, TCacheCleanStrategy} from '../сontract';
 import {IServiceWorkerGlobalScope} from '../../types';
-import {CacheSw} from './cache';
+import {Cache} from './cache';
 
 /**
  * Очищать кеш необходимо ввиду следующих причин:
@@ -30,7 +30,7 @@ import {CacheSw} from './cache';
  *  ];
  */
 export class CacheCleaner implements ICacheCleaner {
-  constructor(private cache: CacheSw) {
+  constructor(private cache: Cache) {
   }
 
   async clean(strategy: TCacheCleanStrategy): Promise<void> {

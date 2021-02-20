@@ -1,14 +1,15 @@
 declare const self: IServiceWorkerGlobalScope;
 import {IMessageEvent, MessageType} from './сontract';
 import {IServiceWorkerGlobalScope} from '../types';
-import {CacheSw} from './cache/cache';
+import {SwEnv} from './sw.env';
 
 /**
  * Отвечает за обработку/обмен сообщениями
  * между сервис воркером и его клиентами
  */
-export class ExchangeSw {
-  constructor(public cache: CacheSw) {
+export class Exchange {
+
+  constructor(private sw: SwEnv) {
   }
 
   async send(type: MessageType, data) {
@@ -24,7 +25,7 @@ export class ExchangeSw {
     switch (data.type) {
       case 'GET_INFO':
         this.send('INFO', {
-          caches: await this.cache.info()
+          caches: await this.sw.cache?.info()
         });
         break;
       default:

@@ -3,8 +3,40 @@ import {CacheItem} from './cache/item/cache.item';
 export type TGetFromCacheStrategy = 'cache || fetch -> cache';
 export type TCacheCleanStrategy = 'uncontrolled';
 
-export type TCacheVersionStore = 'self' | 'IndexedDB';
-export type TCacheVersionReceivingMethod = 'server';
+//region SwEnv options
+
+export interface ISwEnvOptions {
+  database?: IDatabaseOptions,
+  cache?: ICacheOptions,
+}
+
+export interface IDatabaseOptions {
+  name: string;
+  version?: number; // перед определением версии убедись, что ты понимаешь что делаешь: https://learn.javascript.ru/indexeddb#hranilische-obektov
+}
+
+export interface ICacheOptions {
+  controlExtentions: string[];
+  itemVersionDBStoreName?: string; // имя таблицы, если версия какого-либо кеша хранится в IndexedDB
+  items: ICacheItemOptions[];
+}
+
+export interface ICacheItemOptions {
+  title: string;
+  version: {
+    value?: string;   // если не задано, тогда версия кеша будет запрашиваться из IndexedDB
+    pathUrl?: string; // если версию кеша надо получать с сервера
+  }
+  match: ICacheItemMatchOptions;
+}
+
+export interface ICacheItemMatchOptions {
+  order: number;     // Когда контейнер кешей решает задачу "item(url: URL): CacheItem - какой же CacheItem отдать?" match подходящего идет в порядке возрастания match.order,
+  pathStart: string; // а проверка заключается в том, что url.pathname должен начинаться с pathStart
+  useInCacheControl: boolean; // Когда кеш проверяет "isControl(url: URL)", тогда в проверке может поучавствовать CacheItem match на свой pathStart
+}
+
+//endregion
 
 export const swCacheFetchInit: RequestInit = {
   /**
@@ -17,9 +49,15 @@ export const swCacheFetchInit: RequestInit = {
 };
 
 export interface ICacheContainer {
-  item(url: URL): CacheItem;
+  /**
+   * Версия некоторых кешей может лежать в IndexedDB, поэтому
+   * после создания контейнера кешей необходимо дождаться его инициализации
+   */
+  init(): Promise<void>;
 
   items(): CacheItem[];
+
+  item(url: URL): CacheItem;
 
   info(): Promise<any>;
 
@@ -91,4 +129,8 @@ export interface IMessageEvent extends ExtendableMessageEvent {
     type: MessageType;
     data: any;
   };
+}
+
+export interface Type<T> extends Function { // тип описывает конструктор какого-то класса
+  new(...args: any[]): T;
 }

@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheName, IGetFromCache, IGetFromCacheItem, swCacheFetchInit} from '../../сontract';
+import {ICacheItemMatchOptions, ICacheName, IGetFromCache, IGetFromCacheItem, swCacheFetchInit} from '../../сontract';
 import {IServiceWorkerGlobalScope} from '../../../types';
 
 /**
@@ -9,7 +9,7 @@ import {IServiceWorkerGlobalScope} from '../../../types';
  */
 export class CacheItem {
   constructor(public cacheName: ICacheName,
-              public options?: { pathStart?: string }) {
+              public options: { match: ICacheItemMatchOptions }) {
   }
 
   cache(): Promise<Cache> {
@@ -57,7 +57,7 @@ export class CacheItem {
   }
 
   match(url: URL): boolean {
-    const pathStart = this.options?.pathStart;
+    const {pathStart} = this.options.match;
     return pathStart ? url.pathname.startsWith(pathStart) : false;
   }
 

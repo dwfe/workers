@@ -1,15 +1,15 @@
 declare const self: IServiceWorkerGlobalScope;
+import {SwEnv} from './src/sw.env';
 import {IServiceWorkerGlobalScope} from './types';
-import {ModuleSw} from './module.sw';
 
-self.ModuleSw = ModuleSw;
+self.SwEnv = SwEnv;
 
 self.log = (...args) => {
   if (self.isDebug) {
-    // const date = new Date();
-    // const dateISOStringCorrectTimeZone = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
-    // console.log(`[${dateISOStringCorrectTimeZone}] sw `, ...args);
-    console.log('sw', ...args);
+    const date = new Date();
+    const dateISOStringCorrectTimeZone = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
+    console.log(`[${dateISOStringCorrectTimeZone}] sw `, ...args);
+    // console.log('sw', ...args);
   }
 };
 
