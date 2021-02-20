@@ -8,7 +8,7 @@ declare const self: IServiceWorkerGlobalScope;
 
 export class CacheContainer implements ICacheContainer {
 
-  container: Map<string, CacheItem> = new Map(); // отсортирован по возрастанию options.match.order
+  container: Map<string, CacheItem> = new Map();
 
   constructor(private cache: Cache) {
   }
@@ -19,7 +19,7 @@ export class CacheContainer implements ICacheContainer {
       const dto = items[i];
       const scope = this.cache.sw.scope;
       const {title, match} = dto;
-      const version = dto.version.value || await this.cache.itemVersionFromDB(title);
+      const version = dto.version.value || await this.cache.getItemVersionFromDB(title);
       const cacheName = new CacheName(scope, title, version);
       const item = new CacheItem(cacheName, {match});
       this.container.set(cacheName.value, item);

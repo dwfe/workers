@@ -1,8 +1,5 @@
 import {CacheItem} from './cache/item/cache.item';
 
-export type TGetFromCacheStrategy = 'cache || fetch -> cache';
-export type TCacheCleanStrategy = 'uncontrolled';
-
 //region SwEnv options
 
 export interface ISwEnvOptions {
@@ -24,21 +21,27 @@ export interface ICacheOptions {
 export interface ICacheItemOptions {
   title: string;
   version: {
-    value?: string;   // если не задано, тогда версия кеша будет запрашиваться из IndexedDB
-    pathUrl?: string; // если версию кеша надо получать с сервера
+    value?: string;     // если не задано, тогда версия кеша будет запрашиваться из IndexedDB из таблицы ICacheOptions.itemVersionDBStoreName
+    fetchPath?: string; // путь до сервиса на сервере, если версию кеша надо получать с сервера
   }
   match: ICacheItemMatchOptions;
 }
 
 export interface ICacheItemMatchOptions {
-  order: number;     // Когда контейнер кешей решает задачу "item(url: URL): CacheItem - какой же CacheItem отдать?" match подходящего идет в порядке возрастания match.order,
+  order: number;     // Когда контейнер кешей решает задачу "какой же CacheItem отдать - item(url: URL): CacheItem?" match подходящего item идет в порядке возрастания order,
   pathStart: string; // а проверка заключается в том, что url.pathname должен начинаться с pathStart
-  useInCacheControl: boolean; // Когда кеш проверяет "isControl(url: URL)", тогда в проверке может поучавствовать CacheItem match на свой pathStart
+  useInCacheControl: boolean; // Когда кеш проверяет "isControl(url: URL)", тогда в проверке может поучавствовать CacheItem, выполняя match на свой pathStart
 }
 
 //endregion
 
+//region Cache
+
+export type TGetFromCacheStrategy = 'cache || fetch -> cache';
+export type TCacheCleanStrategy = 'delete-uncontrolled';
+
 export const swCacheFetchInit: RequestInit = {
+
   /**
    * Если ожидается, что sw закеширует ответ сервера, тогда:
    *   - запрос должен идти мимо браузерного кеша;
@@ -46,6 +49,7 @@ export const swCacheFetchInit: RequestInit = {
    * https://developer.mozilla.org/en-US/docs/Web/API/Request/cache
    */
   cache: 'no-store'
+
 };
 
 export interface ICacheContainer {
@@ -62,20 +66,25 @@ export interface ICacheContainer {
   info(): Promise<any>;
 
   isControl(url: URL): boolean;
+
 }
 
 export interface ICacheCleaner {
+
   clean(strategy: TCacheCleanStrategy): Promise<void>;
 
   findToDelete(strategy: TCacheCleanStrategy): Promise<string[]>; // возвращает список имен кешей для удаления
 
   delete(cacheNames: string[]);
+
 }
 
 export interface ICacheName {
+
   value: string;
 
   info();
+
 }
 
 /**
@@ -122,6 +131,10 @@ export interface IPrecache {
   connectionTimeout?: number; // для каждого path
 }
 
+//endregion
+
+//region Exchange
+
 export type MessageType = 'GET_INFO' | 'INFO' | 'RELOAD_PAGE';
 
 export interface IMessageEvent extends ExtendableMessageEvent {
@@ -130,6 +143,8 @@ export interface IMessageEvent extends ExtendableMessageEvent {
     data: any;
   };
 }
+
+//endregion
 
 export interface Type<T> extends Function { // тип описывает конструктор какого-то класса
   new(...args: any[]): T;

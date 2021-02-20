@@ -67,7 +67,7 @@ export class CacheCleaner implements ICacheCleaner {
        * ВНИМАНИЕ! Стратегия подойдет, если к origin привязан только один sw,
        *           иначе возможно удаление кеша, принадлежащего другому sw этого origin
        */
-      case 'uncontrolled':
+      case 'delete-uncontrolled':
         return cacheNames.filter(cacheName => !expected.includes(cacheName));
       default:
         throw new Error(`sw unknown strategy '${strategy}' of CacheCleaner.findToDelete(…)`);

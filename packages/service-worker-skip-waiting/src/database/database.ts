@@ -23,33 +23,62 @@ export class Database {
     return new Promise((resolve, reject) => {
       const open = self.indexedDB.open(this.name, this.version);
       open.onerror = (event: Event) => {
-        self.logError(`error opening '${this.name}' db`);
+        this.logError(`error opening '${this.name}' db`);
         reject(event);
       };
       open.onsuccess = (event: Event) => resolve(open.result);
     });
   }
 
-  getValue(storeName: string, key: IDBValidKey): Promise<any | undefined> {
+  get(storeName: string, key: IDBValidKey): Promise<any | undefined> {
     return new Promise((resolve, reject) => {
-      const logPart = `db'${this.name}'.store'${storeName}'.key'${key}'`;
+      this.log(`get value from ${this.logPart(storeName, key)}`)
       const req = this.db
         .transaction([storeName])
         .objectStore(storeName)
         .get(key);
       req.onerror = (event: Event) => {
-        self.logError(`error requesting value from ${logPart}`);
+        this.logError('data getting error');
         reject(event);
       };
       req.onsuccess = (event: Event) => {
         let result = req.result
         if (result === undefined)
-          self.logError(`db value is undefined -> ${logPart}`);
+          this.logError(`value is undefined -> ${this.logPart(storeName, key)}`);
         else
           result = JSON.parse(result);
         resolve(result);
       }
     });
+  }
+
+  put(storeName: string, value: string, key: IDBValidKey): Promise<IDBValidKey> {
+    return new Promise((resolve, reject) => {
+      this.log(`put '${value}' to ${this.logPart(storeName, key)}`);
+      const req = this.db
+        .transaction([storeName])
+        .objectStore(storeName)
+        .put(value, key);
+      req.onerror = (event: Event) => {
+        self.logError('error putting value');
+        reject(event);
+      };
+      req.onsuccess = (event: Event) => {
+        resolve(req.result);
+      }
+    });
+  }
+
+  logPart(storeName: string, key: IDBValidKey) {
+    return `.store[${storeName}].key[${key}]`;
+  }
+
+  log(...args) {
+    self.log(`db'${this.name}'`, ...args);
+  }
+
+  logError(...args) {
+    self.logError(`db'${this.name}'`, ...args);
   }
 
 }

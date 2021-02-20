@@ -12,7 +12,8 @@ const sw = new SwEnv('/', {
       {
         title: 'app',
         version: {
-          value: 'v2'
+          // value: 'v2'
+          fetchPath: '/hello/world'
         },
         match: {
           order: 10,
@@ -23,7 +24,8 @@ const sw = new SwEnv('/', {
       {
         title: 'tiles',
         version: {
-          value: 'v2'
+          // value: 'v2'
+          fetchPath: '/hello/world'
         },
         match: {
           order: 1,
@@ -40,7 +42,8 @@ self.addEventListener('install', event => {
   self.log('installing…');
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
   event.waitUntil(
-    sw.init()
+    sw.cache.versionLoader.run()
+      .then(() => sw.init())
       .then(() => sw.cache.precache({
         strategy: 'cache || fetch -> cache',
         throwError: false,
@@ -63,7 +66,7 @@ self.addEventListener('activate', event => {
   self.log('activating…');
   event.waitUntil(
     self.clients.claim() // переключить всех клиентов на этот новый sw
-      .then(() => sw.cache.clean('uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
+      .then(() => sw.cache.clean('delete-uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
       .then(() => self.delay(5_000))
       .then(() => sw.exchange.send('RELOAD_PAGE'))
       .then(() => self.log('activated'))
