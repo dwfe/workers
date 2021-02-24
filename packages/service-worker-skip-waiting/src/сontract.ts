@@ -9,12 +9,23 @@ export interface ISwEnvOptions {
 
 export interface IDatabaseOptions {
   name: string;
-  version?: number; // перед определением версии убедись, что ты понимаешь что делаешь: https://learn.javascript.ru/indexeddb#hranilische-obektov
+  /**
+   * Версию меняют, если произошло одно из событий:
+   *   - изменился состав хранилищ (так называются таблицы в IndexedDB);
+   *   - изменилась структура какого-то хранилища.
+   * Когда меняется версия db (либо когда создается новая db), тогда после открытия базы сработает обработчик 'onupgradeneeded'.
+   * Поэтому просто изменить версию недостаточно, надо еще изменить логику для обработчика 'onupgradeneeded'.
+   *
+   * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#creating_or_updating_the_version_of_the_database
+   */
+  version?: number;
 }
 
 export interface ICacheOptions {
   controlExtentions: string[];
-  itemVersionDBStoreName?: string; // имя таблицы, если версия какого-либо кеша хранится в IndexedDB
+  version?: {
+    storeName?: string; // имя таблицы, если версия какого-либо кеша хранится в IndexedDB
+  },
   items: ICacheItemOptions[];
 }
 
@@ -145,6 +156,16 @@ export interface IMessageEvent extends ExtendableMessageEvent {
 }
 
 //endregion
+
+export interface IDatabaseHandler {
+
+  /**
+   * Эта функция будет вызвана при создании новой db, либо при изменении версии db.
+   * подробнее смотри в Database.open()
+   */
+  onupgradeneeded(db: IDBDatabase, event: IDBVersionChangeEvent): any;
+
+}
 
 export interface Type<T> extends Function { // тип описывает конструктор какого-то класса
   new(...args: any[]): T;

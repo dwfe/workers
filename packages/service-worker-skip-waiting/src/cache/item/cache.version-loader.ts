@@ -1,23 +1,27 @@
-import {ICacheItemOptions} from '../сontract';
-import {IServiceWorkerGlobalScope} from '../../types';
-import {Cache} from './cache';
-
 declare const self: IServiceWorkerGlobalScope;
+import {CacheDatabaseHandler} from '../cache.database-handler';
+import {IServiceWorkerGlobalScope} from '../../../types';
+import {ICacheItemOptions} from '../../сontract';
+import {Cache} from '../cache';
 
-export class CacheItemVersionLoader {
-  constructor(private cache: Cache) {
+export class CacheVersionLoader {
+
+  constructor(private cache: Cache,
+              private dbHandler: CacheDatabaseHandler) {
   }
 
   async run(): Promise<void> {
     const items = this.cache.options.items.filter(item => item.version.fetchPath);
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const version = await this.fetchVersion(item);
-      await this.cache.putItemVersionToDB(item.title, version);
+      const version = await this.fetch(item);
+      await this.dbHandler.putVersion(item.title, version);
     }
+    // после загрузки новых версий кеша надо заново проинициализировать кеш
+    await this.cache.init();
   }
 
-  async fetchVersion(item: ICacheItemOptions): Promise<string> {
+  async fetch(item: ICacheItemOptions): Promise<string> {
     const path = item.version.fetchPath as string;
     this.log(`run for '${item.title}' from '${path}'`);
     const version = 'v32'
@@ -27,7 +31,7 @@ export class CacheItemVersionLoader {
     //   this.logError(`status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)
     // });
     if (version) return version;
-    throw new Error(`invalid version '${version}' received from server`);
+    throw new Error(`cache '${item.title}'. Invalid version '${version}' fetched from server`);
   }
 
   log(...args) {

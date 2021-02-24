@@ -1,7 +1,7 @@
 declare const self: IServiceWorkerGlobalScope;
+import {IDatabaseHandler, ISwEnvOptions} from './сontract';
 import {IServiceWorkerGlobalScope} from '../types';
 import {Database} from './database/database';
-import {ISwEnvOptions} from './сontract';
 import {Cache} from './cache/cache';
 import {Exchange} from './exchange';
 
@@ -15,11 +15,9 @@ export class SwEnv {
   constructor(public scope: string,
               public options: ISwEnvOptions) {
     if (options.database)
-      this.database = new Database(this);
-
+      this.database = new Database(this, options.database);
     if (options.cache)
-      this.cache = new Cache(this);
-
+      this.cache = new Cache(this, options.cache);
     this.exchange = new Exchange(this);
   }
 
@@ -32,6 +30,12 @@ export class SwEnv {
 
     self.log('initialization completed')
     this.isReady = true;
+  }
+
+  getDatabaseHandlers(): IDatabaseHandler[] {
+    const handlers: IDatabaseHandler[] = [];
+    if (this.cache) handlers.push(this.cache.databaseHandler);
+    return handlers;
   }
 
 }

@@ -3,17 +3,20 @@ importScripts('module.sw.js');
 
 const sw = new SwEnv('/', {
   database: {
-    name: 'db_local'
+    name: 'db_local',
+    version: 1 // нельзя просто так менять версию
   },
   cache: {
     controlExtentions: ['js', 'css', 'woff2', 'ttf', 'otf', 'eot'],
-    itemVersionDBStoreName: 'cache_item_versions',
+    version: {
+      storeName: 'cache_item_versions'
+    },
     items: [
       {
         title: 'app',
         version: {
-          // value: 'v2'
-          fetchPath: '/hello/world'
+          fetchPath: '/get/app/version'
+          // value: 'v12.0.4'
         },
         match: {
           order: 10,
@@ -24,8 +27,8 @@ const sw = new SwEnv('/', {
       {
         title: 'tiles',
         version: {
-          // value: 'v2'
-          fetchPath: '/hello/world'
+          fetchPath: '/get/tiles/version'
+          // value: 'v3'
         },
         match: {
           order: 1,
@@ -43,7 +46,6 @@ self.addEventListener('install', event => {
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
   event.waitUntil(
     sw.cache.versionLoader.run()
-      .then(() => sw.init())
       .then(() => sw.cache.precache({
         strategy: 'cache || fetch -> cache',
         throwError: false,

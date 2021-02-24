@@ -1,5 +1,6 @@
 import {ICacheCleaner, ICacheContainer, ICacheOptions, IGetFromCache, IGetFromCacheItem, IPrecache, TCacheCleanStrategy, TGetFromCacheStrategy} from '../сontract';
-import {CacheItemVersionLoader} from './cache-item-version.loader';
+import {CacheVersionLoader} from './item/cache.version-loader';
+import {CacheDatabaseHandler} from './cache.database-handler';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
 import {CacheCleaner} from './cache.cleaner';
@@ -9,16 +10,19 @@ import {SwEnv} from '../sw.env';
 declare const self: IServiceWorkerGlobalScope;
 
 export class Cache {
+  databaseHandler: CacheDatabaseHandler;
   container: ICacheContainer;
   cleaner: ICacheCleaner;
-  versionLoader: CacheItemVersionLoader;
-  options: ICacheOptions;
+  versionLoader: CacheVersionLoader;
 
-  constructor(public sw: SwEnv) {
-    this.options = sw.options.cache as ICacheOptions;
-    this.container = new CacheContainer(this);
+  constructor(public sw: SwEnv,
+              public options: ICacheOptions) {
+    if (!self.caches)
+      throw new Error(`This browser doesn't support Cache API`)
+    this.databaseHandler = new CacheDatabaseHandler(this, sw.database);
+    this.container = new CacheContainer(this, this.databaseHandler);
     this.cleaner = new CacheCleaner(this);
-    this.versionLoader = new CacheItemVersionLoader(this);
+    this.versionLoader = new CacheVersionLoader(this, this.databaseHandler);
   }
 
   async init(): Promise<void> {
@@ -97,33 +101,6 @@ export class Cache {
   items(): CacheItem[] {
     return this.container.items();
   }
-
-
-  async getItemVersionFromDB(title: string): Promise<any | undefined> {
-    return this.itemVersionDBAction('get', title);
-  }
-
-  async putItemVersionToDB(title: string, version: string): Promise<IDBValidKey> {
-    return this.itemVersionDBAction('put', title, version);
-  }
-
-  private itemVersionDBAction(action: 'get' | 'put', title: string, version?: string) {
-    if (!this.sw.database)
-      throw new Error('database is undefined');
-    switch (action) {
-      case 'get':
-        return this.sw.database?.get(this.getItemVersionStoreName(), title);
-      case 'put':
-        return this.sw.database?.put(this.getItemVersionStoreName(), version as string, title);
-    }
-  }
-
-  private getItemVersionStoreName(): string {
-    const storeName = this.options.itemVersionDBStoreName;
-    if (storeName) return storeName;
-    throw new Error(`option 'cache.itemVersionDBStoreName' is not defined`);
-  }
-
 
   info(): Promise<any> {
     return this.container.info();

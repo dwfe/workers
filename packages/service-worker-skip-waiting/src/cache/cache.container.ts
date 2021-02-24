@@ -1,25 +1,39 @@
-import {IServiceWorkerGlobalScope} from '../../types';
+import {CacheDatabaseHandler} from './cache.database-handler';
 import {ICacheContainer} from '../сontract';
 import {CacheName} from './item/cache.name';
 import {CacheItem} from './item/cache.item';
 import {Cache} from './cache';
 
-declare const self: IServiceWorkerGlobalScope;
-
 export class CacheContainer implements ICacheContainer {
 
-  container: Map<string, CacheItem> = new Map();
+  private container: Map<string, CacheItem> = new Map();
 
-  constructor(private cache: Cache) {
+  constructor(private cache: Cache,
+              private dbHandler: CacheDatabaseHandler) {
   }
 
   async init(): Promise<void> {
     const {items} = this.cache.options;
     for (let i = 0; i < items.length; i++) {
       const dto = items[i];
-      const scope = this.cache.sw.scope;
       const {title, match} = dto;
-      const version = dto.version.value || await this.cache.getItemVersionFromDB(title);
+      const scope = this.cache.sw.scope;
+
+      /**
+       * Действия для получения версии кеша:
+       *   1) взять значение из поля 'version.value'
+       *   2) иначе взять версию из базы данных
+       *   3) иначе задать инит-версию. Чуть позже загрузятся корректные версии и кеш будет проинициализирован заново
+       */
+      let version = dto.version.value;
+      if (!version) {
+        version = await this.dbHandler.getVersion(title);
+        if (!version) {
+          const initVersion = 'init';
+          await this.dbHandler.putVersion(title, initVersion);
+          version = initVersion;
+        }
+      }
       const cacheName = new CacheName(scope, title, version);
       const item = new CacheItem(cacheName, {match});
       this.container.set(cacheName.value, item);
