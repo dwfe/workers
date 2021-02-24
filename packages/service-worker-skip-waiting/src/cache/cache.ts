@@ -10,23 +10,39 @@ import {SwEnv} from '../sw.env';
 declare const self: IServiceWorkerGlobalScope;
 
 export class Cache {
-  databaseHandler: CacheDatabaseHandler;
-  container: ICacheContainer;
-  cleaner: ICacheCleaner;
-  versionLoader: CacheVersionLoader;
+  databaseHandler!: CacheDatabaseHandler;
+  container!: ICacheContainer;
+  cleaner!: ICacheCleaner;
+  versionLoader!: CacheVersionLoader;
+  isReady = false;
 
   constructor(public sw: SwEnv,
               public options: ICacheOptions) {
     if (!self.caches)
       throw new Error(`This browser doesn't support Cache API`)
-    this.databaseHandler = new CacheDatabaseHandler(this, sw.database);
-    this.container = new CacheContainer(this, this.databaseHandler);
-    this.cleaner = new CacheCleaner(this);
-    this.versionLoader = new CacheVersionLoader(this, this.databaseHandler);
   }
 
   async init(): Promise<void> {
+    if (!this.options) {
+      this.isReady = true;
+      self.logWarn(`without cache`);
+      return;
+    }
+    this.isReady = false;
+
+    this.databaseHandler = new CacheDatabaseHandler(this, this.sw.database);
+    this.container = new CacheContainer(this, this.databaseHandler);
+    this.cleaner = new CacheCleaner(this);
+    this.versionLoader = new CacheVersionLoader(this, this.databaseHandler);
+
     await this.container.init();
+    if (!this.container.size()) {
+      this.isReady = false;
+      self.logWarn('cache is empty');
+      return;
+    }
+
+    this.isReady = true;
     self.log(` - cache is running: ${this.items().map(item => item.cacheName.value).join(', ')}`);
   }
 

@@ -11,19 +11,25 @@ export class CacheVersionLoader {
   }
 
   async run(): Promise<void> {
+    let changesCount = 0;
     const items = this.cache.options.items.filter(item => item.version.fetchPath);
     for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const version = await this.fetch(item);
-      await this.dbHandler.putVersion(item.title, version);
+      const option = items[i];
+      const {title} = option;
+      const prevVersion = await this.dbHandler.getVersion(title);
+      const version = await self.timeout(10_000, this.fetch(option));
+      if (prevVersion !== version) {
+        await this.dbHandler.putVersion(title, version);
+        changesCount++;
+      }
     }
-    // после загрузки новых версий кеша надо заново проинициализировать кеш
-    await this.cache.init();
+    if (changesCount > 0) // после загрузки новых версий надо заново проинициализировать кеш
+      await this.cache.init();
   }
 
-  async fetch(item: ICacheItemOptions): Promise<string> {
-    const path = item.version.fetchPath as string;
-    this.log(`run for '${item.title}' from '${path}'`);
+  async fetch(option: ICacheItemOptions): Promise<string> {
+    const path = option.version.fetchPath as string;
+    this.log(`run for '${option.title}' from '${path}'`);
     const version = 'v32'
     //   await fetch(path).then(resp => {
     //   if (resp.ok)
@@ -31,14 +37,11 @@ export class CacheVersionLoader {
     //   this.logError(`status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)
     // });
     if (version) return version;
-    throw new Error(`cache '${item.title}'. Invalid version '${version}' fetched from server`);
+    throw new Error(`cache '${option.title}'. Invalid version '${version}' fetched from server`);
   }
 
   log(...args) {
     self.log('version loader', ...args);
   }
 
-  logError(...args) {
-    self.logError('version loader', ...args);
-  }
 }

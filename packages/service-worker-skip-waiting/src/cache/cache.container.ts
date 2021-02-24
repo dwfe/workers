@@ -23,16 +23,12 @@ export class CacheContainer implements ICacheContainer {
        * Действия для получения версии кеша:
        *   1) взять значение из поля 'version.value'
        *   2) иначе взять версию из базы данных
-       *   3) иначе задать инит-версию. Чуть позже загрузятся корректные версии и кеш будет проинициализирован заново
        */
       let version = dto.version.value;
       if (!version) {
         version = await this.dbHandler.getVersion(title);
-        if (!version) {
-          const initVersion = 'init';
-          await this.dbHandler.putVersion(title, initVersion);
-          version = initVersion;
-        }
+        if (!version)
+          throw new Error(`sw cache container can't get version for '${title}'`);
       }
       const cacheName = new CacheName(scope, title, version);
       const item = new CacheItem(cacheName, {match});
@@ -58,6 +54,10 @@ export class CacheContainer implements ICacheContainer {
       .filter(item => item.options.match.useInCacheControl)
       .find(item => item.match(url));
     return !!found;
+  }
+
+  size(): number {
+    return this.container.size;
   }
 
   info(): Promise<any> {

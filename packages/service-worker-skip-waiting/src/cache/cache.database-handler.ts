@@ -29,8 +29,6 @@ export class CacheDatabaseHandler implements IDatabaseHandler {
   }
 
   private versionDBAction(action: 'get' | 'put', title: string, version?: string) {
-    if (!this.database?.isReady)
-      throw new Error('database.db is undefined');
     if (!this.versionStoreName)
       throw new Error('version storeName is undefined');
     if (!title)

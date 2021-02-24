@@ -7,6 +7,7 @@ interface IServiceWorkerGlobalScope extends ServiceWorkerGlobalScope {
   SwEnv: Type<SwEnv>;
 
   log: (...args) => void;
+  logWarn: (...args) => void;
   logError: (...args) => void;
   delay: (ms: number) => Promise<void>;
   timeout: (ms: number, promise: Promise<any>) => Promise<any>;

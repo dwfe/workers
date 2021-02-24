@@ -6,11 +6,15 @@ self.SwEnv = SwEnv;
 
 self.log = (...args) => {
   if (self.isDebug) {
-    const date = new Date();
-    const dateISOStringCorrectTimeZone = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
-    console.log(`[${dateISOStringCorrectTimeZone}] sw `, ...args);
-    // console.log('sw', ...args);
+    // const date = new Date();
+    // const dateISOStringCorrectTimeZone = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
+    // console.log(`[${dateISOStringCorrectTimeZone}] sw `, ...args);
+    console.log('sw', ...args);
   }
+};
+
+self.logWarn = (...args) => {
+  console.warn('sw', ...args);
 };
 
 self.logError = (...args) => {

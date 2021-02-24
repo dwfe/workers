@@ -45,7 +45,8 @@ self.addEventListener('install', event => {
   self.log('installing…');
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
   event.waitUntil(
-    sw.cache.versionLoader.run()
+    sw.waitForReady()
+      .then(() => sw.cache.versionLoader.run())
       .then(() => sw.cache.precache({
         strategy: 'cache || fetch -> cache',
         throwError: false,

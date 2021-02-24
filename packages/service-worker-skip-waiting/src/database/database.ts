@@ -5,34 +5,41 @@ import {SwEnv} from '../sw.env';
 
 export class Database {
   private db!: IDBDatabase; // крайне нежелательно делать это поле публичным
-  private name: string;
-  private version?: number
+  private name!: string;
+  private version!: number
+  public isReady = false;
 
   constructor(private sw: SwEnv,
               private options: IDatabaseOptions) {
     if (!self.indexedDB)
       throw new Error(`This browser doesn't support IndexedDB`)
-    this.name = options.name;
-    this.version = options.version;
-  }
-
-  close() {
-    this.db.close();
-    this.db = null as any;
-  }
-
-  get isReady() {
-    return !!this.db;
   }
 
   async init(): Promise<void> {
+    if (!this.options) {
+      this.isReady = true;
+      self.logWarn(`without database`);
+      return;
+    }
+    this.isReady = false;
+
     if (this.db) this.close(); // попытка повторной инициализации
+
+    this.name = this.options.name;
+    this.version = this.options.version;
+
     this.db = await this.open();
     this.db.onversionchange = (event: IDBVersionChangeEvent) => {
       this.close();
       this.log(`close in 'db.onversionchange' handler, new version '#${event.newVersion}' of this db is ready`);
     }
+    this.isReady = true;
     self.log(` - ${this.toString()} is opened`)
+  }
+
+  close() {
+    this.db?.close();
+    this.db = null as any;
   }
 
   open(): Promise<IDBDatabase> {
@@ -96,7 +103,7 @@ export class Database {
       req.onsuccess = (event: Event) => {
         let result = req.result
         if (result === undefined)
-          this.logError(`value is undefined -> ${this.logPart(storeName, key)}`);
+          this.logWarn(`value is undefined -> ${this.logPart(storeName, key)}`);
         else
           result = JSON.parse(result);
         resolve(result);
@@ -131,6 +138,10 @@ export class Database {
 
   log(...args) {
     self.log(this.toString(), ...args);
+  }
+
+  logWarn(...args) {
+    self.logWarn(this.toString(), ...args);
   }
 
   logError(...args) {

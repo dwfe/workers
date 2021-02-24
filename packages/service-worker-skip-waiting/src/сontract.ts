@@ -18,7 +18,7 @@ export interface IDatabaseOptions {
    *
    * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#creating_or_updating_the_version_of_the_database
    */
-  version?: number;
+  version: number;
 }
 
 export interface ICacheOptions {
@@ -32,7 +32,7 @@ export interface ICacheOptions {
 export interface ICacheItemOptions {
   title: string;
   version: {
-    value?: string;     // если не задано, тогда версия кеша будет запрашиваться из IndexedDB из таблицы ICacheOptions.itemVersionDBStoreName
+    value?: string;     // если не задано, тогда версия кеша будет запрашиваться из IndexedDB из таблицы ICacheOptions.version.storeName
     fetchPath?: string; // путь до сервиса на сервере, если версию кеша надо получать с сервера
   }
   match: ICacheItemMatchOptions;
@@ -74,9 +74,11 @@ export interface ICacheContainer {
 
   item(url: URL): CacheItem;
 
-  info(): Promise<any>;
-
   isControl(url: URL): boolean;
+
+  size(): number;
+
+  info(): Promise<any>;
 
 }
 
