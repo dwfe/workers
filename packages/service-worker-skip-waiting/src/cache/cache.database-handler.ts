@@ -7,7 +7,7 @@ export class CacheDatabaseHandler implements IDatabaseHandler {
   versionStoreName: string | undefined;
 
   constructor(private cache: Cache,
-              private database: Database | undefined) {
+              private database: Database) {
     this.versionStoreName = this.cache.options.version?.storeName;
   }
 
@@ -36,11 +36,11 @@ export class CacheDatabaseHandler implements IDatabaseHandler {
 
     switch (action) {
       case 'get':
-        return this.database?.get(this.versionStoreName, title);
+        return this.database.get(this.versionStoreName, title);
       case 'put':
         if (!version)
           throw new Error(`invalid version '${version}'`);
-        return this.database?.put(this.versionStoreName, version, title);
+        return this.database.put(this.versionStoreName, version, title);
     }
   }
 
