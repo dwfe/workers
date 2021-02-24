@@ -10,7 +10,7 @@ export class CacheVersionLoader {
               private dbHandler: CacheDatabaseHandler) {
   }
 
-  async run(): Promise<void> {
+  async run(skipCacheInit?:boolean): Promise<void> {
     let changesCount = 0;
     const items = this.cache.options.items.filter(item => item.version.fetchPath);
     for (let i = 0; i < items.length; i++) {
@@ -23,7 +23,7 @@ export class CacheVersionLoader {
         changesCount++;
       }
     }
-    if (changesCount > 0) // после загрузки новых версий надо заново проинициализировать кеш
+    if (!skipCacheInit && changesCount > 0) // после загрузки новых версий надо заново проинициализировать кеш
       await this.cache.init();
   }
 

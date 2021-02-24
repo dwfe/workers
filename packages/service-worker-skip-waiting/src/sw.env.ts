@@ -18,6 +18,7 @@ export class SwEnv {
   }
 
   async init(): Promise<void> {
+    // TODO isReady у самого sw.env
     self.log('initialization…')
     await this.database.init();
     await this.cache.init();
@@ -31,14 +32,13 @@ export class SwEnv {
 
   waitForReady(): Promise<void> {
     return new Promise(async (resolve, reject) => {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 2; i++) {
         await self.delay(5_000)
         if (this.isReady) break;
       }
       if (this.isReady) resolve();
       else {
-        self.logError('initialization error');
-        reject();
+        reject('sw initialization timeout');
       }
     });
   }

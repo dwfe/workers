@@ -11,9 +11,9 @@ declare const self: IServiceWorkerGlobalScope;
 
 export class Cache {
   databaseHandler!: CacheDatabaseHandler;
+  versionLoader!: CacheVersionLoader;
   container!: ICacheContainer;
   cleaner!: ICacheCleaner;
-  versionLoader!: CacheVersionLoader;
   isReady = false;
 
   constructor(public sw: SwEnv,
@@ -31,9 +31,17 @@ export class Cache {
     this.isReady = false;
 
     this.databaseHandler = new CacheDatabaseHandler(this, this.sw.database);
+    this.versionLoader = new CacheVersionLoader(this, this.databaseHandler);
+
+    /**
+     * Может оказаться, что пользователь удалил db. При инициализации database
+     * сама db будет создана, но хранилище версий не восстановится.
+     * TODO сначала проверить, а не отсутствует ли таблица
+     */
+    await this.versionLoader.run(true);
+
     this.container = new CacheContainer(this, this.databaseHandler);
     this.cleaner = new CacheCleaner(this);
-    this.versionLoader = new CacheVersionLoader(this, this.databaseHandler);
 
     await this.container.init();
     if (!this.container.size()) {

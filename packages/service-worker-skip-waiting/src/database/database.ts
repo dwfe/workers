@@ -45,7 +45,6 @@ export class Database {
   open(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const open = self.indexedDB.open(this.name, this.version);
-      const db = open.result;
 
       open.onerror = (event: Event) => {
         this.logError(`error opening`);
@@ -70,7 +69,13 @@ export class Database {
         const {oldVersion, newVersion} = event;
         console.log(`>>>>>>>> IDB`, {oldVersion, newVersion})
 
-        this.sw.getDatabaseHandlers().forEach(dbHandler => dbHandler.onupgradeneeded(db, event));
+        const db = open.result;
+        const versionStoreName = this.sw.options.cache?.version?.storeName;
+        if (versionStoreName && !db.objectStoreNames.contains(versionStoreName)) {
+          db.createObjectStore(versionStoreName);
+        }
+
+        // this.sw.getDatabaseHandlers().forEach(dbHandler => dbHandler.onupgradeneeded(open.result, event));
       };
 
       open.onblocked = (event: Event) => {
@@ -85,7 +90,7 @@ export class Database {
         this.logError(`close in 'open.onblocked' handler`);
       }
 
-      open.onsuccess = (event: Event) => resolve(db);
+      open.onsuccess = (event: Event) => resolve(open.result);
     });
   }
 
