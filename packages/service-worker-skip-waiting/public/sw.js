@@ -47,8 +47,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     sw.waitForReady()
       .then(() => self.log('installing…'))
-      .then(() => sw.cacheVersionLoader.run())
-      .then(() => sw.cache.init())
+      .then(() => sw.updateCacheVersions())
       .then(() => sw.cache.precache({
         strategy: 'cache || fetch -> cache',
         throwError: false,

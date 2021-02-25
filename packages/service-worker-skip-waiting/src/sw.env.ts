@@ -20,6 +20,11 @@ export class SwEnv {
     this.cacheVersionLoader = new CacheVersionLoader(this.database, options);
   }
 
+  get isReady(): boolean {
+    return this.database.isReady
+      && this.cache.isReady;
+  }
+
   async init(): Promise<void> {
     self.log('initialization…')
     await this.database.init();
@@ -27,9 +32,10 @@ export class SwEnv {
     self.log('initialization completed')
   }
 
-  get isReady(): boolean {
-    return this.database.isReady
-      && this.cache.isReady;
+  async updateCacheVersions(): Promise<void> {
+    const changesCount = await this.cacheVersionLoader.run();
+    if (changesCount > 0)
+      await this.cache.init();
   }
 
   waitForReady(): Promise<void> {
