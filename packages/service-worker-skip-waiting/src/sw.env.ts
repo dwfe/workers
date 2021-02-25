@@ -1,5 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheOptions, IDatabaseHandler, IDatabaseOptions, ISwEnvOptions} from './сontract';
+import {ICacheOptions, IDatabaseOptions, ISwEnvOptions} from './сontract';
+import {CacheVersionLoader} from './cache.version-loader';
 import {IServiceWorkerGlobalScope} from '../types';
 import {Database} from './database/database';
 import {Cache} from './cache/cache';
@@ -10,15 +11,17 @@ export class SwEnv {
   cache: Cache;
   exchange: Exchange;
 
+  cacheVersionLoader: CacheVersionLoader;
+
   constructor(public scope: string,
               public options: ISwEnvOptions) {
     this.database = new Database(this, options.database as IDatabaseOptions);
     this.cache = new Cache(this, options.cache as ICacheOptions);
     this.exchange = new Exchange(this);
+    this.cacheVersionLoader = new CacheVersionLoader(this.database, options);
   }
 
   async init(): Promise<void> {
-    // TODO isReady у самого sw.env
     self.log('initialization…')
     await this.database.init();
     await this.cache.init();
@@ -41,12 +44,6 @@ export class SwEnv {
         reject('sw initialization timeout');
       }
     });
-  }
-
-  getDatabaseHandlers(): IDatabaseHandler[] {
-    const handlers: IDatabaseHandler[] = [];
-    if (this.cache) handlers.push(this.cache.databaseHandler);
-    return handlers;
   }
 
 }

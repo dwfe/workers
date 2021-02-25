@@ -1,6 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
-import {SwEnv} from './src/sw.env';
 import {IServiceWorkerGlobalScope} from './types';
+import {SwEnv} from './src/sw.env';
 
 self.SwEnv = SwEnv;
 

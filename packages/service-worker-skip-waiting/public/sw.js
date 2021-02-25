@@ -4,13 +4,14 @@ importScripts('module.sw.js');
 const sw = new SwEnv('/', {
   database: {
     name: 'db_local',
-    version: 1 // нельзя просто так менять версию
+    version: 1,
+    storeNames: {
+      dbVersion: 'db_version',
+      cacheItemVersion: 'cache_item_version',
+    }
   },
   cache: {
     controlExtentions: ['js', 'css', 'woff2', 'ttf', 'otf', 'eot'],
-    version: {
-      storeName: 'cache_item_versions'
-    },
     items: [
       {
         title: 'app',
@@ -42,11 +43,12 @@ const sw = new SwEnv('/', {
 sw.init();
 
 self.addEventListener('install', event => {
-  self.log('installing…');
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
   event.waitUntil(
     sw.waitForReady()
-      .then(() => sw.cache.versionLoader.run())
+      .then(() => self.log('installing…'))
+      .then(() => sw.cacheVersionLoader.run())
+      .then(() => sw.cache.init())
       .then(() => sw.cache.precache({
         strategy: 'cache || fetch -> cache',
         throwError: false,

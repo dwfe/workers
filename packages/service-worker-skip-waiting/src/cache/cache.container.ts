@@ -1,4 +1,4 @@
-import {CacheDatabaseHandler} from './cache.database-handler';
+import {DatabaseController} from '../database/database.controller';
 import {ICacheContainer} from '../сontract';
 import {CacheName} from './item/cache.name';
 import {CacheItem} from './item/cache.item';
@@ -8,8 +8,11 @@ export class CacheContainer implements ICacheContainer {
 
   private container: Map<string, CacheItem> = new Map();
 
-  constructor(private cache: Cache,
-              private dbHandler: CacheDatabaseHandler) {
+  constructor(private cache: Cache) {
+  }
+
+  get dbController(): DatabaseController {
+    return this.cache.sw.database.controller;
   }
 
   async init(): Promise<void> {
@@ -26,7 +29,7 @@ export class CacheContainer implements ICacheContainer {
        */
       let version = dto.version.value;
       if (!version) {
-        version = await this.dbHandler.getVersion(title);
+        version = await this.dbController.getCacheVersion(title);
         if (!version)
           throw new Error(`sw cache container can't get version for '${title}'`);
       }

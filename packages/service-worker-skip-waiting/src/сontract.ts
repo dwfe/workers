@@ -1,11 +1,12 @@
 import {CacheItem} from './cache/item/cache.item';
 
-//region SwEnv options
-
 export interface ISwEnvOptions {
   database?: IDatabaseOptions,
   cache?: ICacheOptions,
 }
+
+
+//region Database
 
 export interface IDatabaseOptions {
   name: string;
@@ -13,19 +14,33 @@ export interface IDatabaseOptions {
    * Версию меняют, если произошло одно из событий:
    *   - изменился состав хранилищ (так называются таблицы в IndexedDB);
    *   - изменилась структура какого-то хранилища.
-   * Когда меняется версия db (либо когда создается новая db), тогда после открытия базы сработает обработчик 'onupgradeneeded'.
-   * Поэтому просто изменить версию недостаточно, надо еще изменить логику для обработчика 'onupgradeneeded'.
+   * Когда меняется версия db (либо когда создается новая db), тогда сразу после открытия базы сработает обработчик 'onupgradeneeded'.
+   * Поэтому просто изменить версию недостаточно, надо еще внести изменения в логику обработчика 'onupgradeneeded'.
    *
    * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#creating_or_updating_the_version_of_the_database
    */
   version: number;
+  storeNames: IDatabaseStoreNames;
 }
+
+export interface IDatabaseStoreNames {
+  dbVersion: string;
+  cacheItemVersion: string;
+}
+
+export interface IDatabaseCheckResult {
+  upgradeNeeded?: boolean;
+  dbVersionStoreInitNeeded?: boolean;
+  cacheVersionStoreFetchNeeded?: boolean;
+}
+
+//endregion
+
+
+//region Cache
 
 export interface ICacheOptions {
   controlExtentions: string[];
-  version?: {
-    storeName?: string; // имя таблицы, если версия какого-либо кеша хранится в IndexedDB
-  },
   items: ICacheItemOptions[];
 }
 
@@ -39,14 +54,10 @@ export interface ICacheItemOptions {
 }
 
 export interface ICacheItemMatchOptions {
-  order: number;     // Когда контейнер кешей решает задачу "какой же CacheItem отдать - item(url: URL): CacheItem?" match подходящего item идет в порядке возрастания order,
+  order: number;     // Когда контейнер кешей решает задачу "какой же CacheItem отдать - item(url: URL): CacheItem?" item'ы проверяются в порядке возрастания order,
   pathStart: string; // а проверка заключается в том, что url.pathname должен начинаться с pathStart
-  useInCacheControl: boolean; // Когда кеш проверяет "isControl(url: URL)", тогда в проверке может поучавствовать CacheItem, выполняя match на свой pathStart
+  useInCacheControl: boolean; // Когда кеш проверяет "isControl(url: URL)", тогда в проверке может поучавствовать CacheItem, выполняя match на свой pathStart. Item'ы проверяются в порядке возрастания order
 }
-
-//endregion
-
-//region Cache
 
 export type TGetFromCacheStrategy = 'cache || fetch -> cache';
 export type TCacheCleanStrategy = 'delete-uncontrolled';
@@ -146,6 +157,7 @@ export interface IPrecache {
 
 //endregion
 
+
 //region Exchange
 
 export type MessageType = 'GET_INFO' | 'INFO' | 'RELOAD_PAGE';
@@ -159,15 +171,6 @@ export interface IMessageEvent extends ExtendableMessageEvent {
 
 //endregion
 
-export interface IDatabaseHandler {
-
-  /**
-   * Эта функция будет вызвана при создании новой db, либо при изменении версии db.
-   * подробнее смотри в Database.open()
-   */
-  onupgradeneeded(db: IDBDatabase, event: IDBVersionChangeEvent): any;
-
-}
 
 export interface Type<T> extends Function { // тип описывает конструктор какого-то класса
   new(...args: any[]): T;

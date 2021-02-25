@@ -1,6 +1,4 @@
 import {ICacheCleaner, ICacheContainer, ICacheOptions, IGetFromCache, IGetFromCacheItem, IPrecache, TCacheCleanStrategy, TGetFromCacheStrategy} from '../сontract';
-import {CacheVersionLoader} from './item/cache.version-loader';
-import {CacheDatabaseHandler} from './cache.database-handler';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
 import {CacheCleaner} from './cache.cleaner';
@@ -10,8 +8,6 @@ import {SwEnv} from '../sw.env';
 declare const self: IServiceWorkerGlobalScope;
 
 export class Cache {
-  databaseHandler!: CacheDatabaseHandler;
-  versionLoader!: CacheVersionLoader;
   container!: ICacheContainer;
   cleaner!: ICacheCleaner;
   isReady = false;
@@ -30,25 +26,9 @@ export class Cache {
     }
     this.isReady = false;
 
-    this.databaseHandler = new CacheDatabaseHandler(this, this.sw.database);
-    this.versionLoader = new CacheVersionLoader(this, this.databaseHandler);
-
-    /**
-     * Может оказаться, что пользователь удалил db. При инициализации database
-     * сама db будет создана, но хранилище версий не восстановится.
-     * TODO сначала проверить, а не отсутствует ли таблица
-     */
-    await this.versionLoader.run(true);
-
-    this.container = new CacheContainer(this, this.databaseHandler);
+    this.container = new CacheContainer(this);
     this.cleaner = new CacheCleaner(this);
-
     await this.container.init();
-    if (!this.container.size()) {
-      this.isReady = false;
-      self.logWarn('cache is empty');
-      return;
-    }
 
     this.isReady = true;
     self.log(` - cache is running: ${this.items().map(item => item.cacheName.value).join(', ')}`);

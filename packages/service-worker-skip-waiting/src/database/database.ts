@@ -1,18 +1,25 @@
-declare const self: IServiceWorkerGlobalScope;
-import {IDatabaseOptions} from '../сontract';
+import {DatabaseController} from './database.controller';
 import {IServiceWorkerGlobalScope} from '../../types';
+import {DatabaseChecker} from './database.checker';
+import {IDatabaseOptions} from '../сontract';
 import {SwEnv} from '../sw.env';
 
-export class Database {
-  private db!: IDBDatabase; // крайне нежелательно делать это поле публичным
-  private name!: string;
-  private version!: number
-  public isReady = false;
+declare const self: IServiceWorkerGlobalScope;
 
-  constructor(private sw: SwEnv,
-              private options: IDatabaseOptions) {
+export class Database {
+  name!: string;
+  db!: IDBDatabase;
+  controller!: DatabaseController;
+  isReady = false;
+
+  constructor(public sw: SwEnv,
+              public options: IDatabaseOptions) {
     if (!self.indexedDB)
       throw new Error(`This browser doesn't support IndexedDB`)
+  }
+
+  get optDbVersion(): number {
+    return this.options.version || 1;
   }
 
   async init(): Promise<void> {
@@ -22,17 +29,20 @@ export class Database {
       return;
     }
     this.isReady = false;
-
-    if (this.db) this.close(); // попытка повторной инициализации
-
     this.name = this.options.name;
-    this.version = this.options.version;
+    this.db = await this.open(); // открыть базу в текущей ее версии
+    this.controller = new DatabaseController(this, this.options.storeNames);
+    const checker = new DatabaseChecker(this.controller, this.sw.options);
+    const checkResult = await checker.run();
 
-    this.db = await this.open();
-    this.db.onversionchange = (event: IDBVersionChangeEvent) => {
-      this.close();
-      this.log(`close in 'db.onversionchange' handler, new version '#${event.newVersion}' of this db is ready`);
+    // Скорректировать структуру базы данных
+    if (checkResult.upgradeNeeded) {
+      let version = this.db.version;
+      this.db = await this.open(++version); // переоткрыть базу с новой версией => запустится апгрейд базы данных
     }
+    // Предопределенные хранилища должны иметь ожидаемое содержимое
+    await this.controller.initStores(checkResult);
+
     this.isReady = true;
     self.log(` - ${this.toString()} is opened`)
   }
@@ -42,12 +52,13 @@ export class Database {
     this.db = null as any;
   }
 
-  open(): Promise<IDBDatabase> {
+  open(version?: number): Promise<IDBDatabase> {
+    if (this.db) this.close();
     return new Promise((resolve, reject) => {
-      const open = self.indexedDB.open(this.name, this.version);
+      const open = self.indexedDB.open(this.name, version);
 
       open.onerror = (event: Event) => {
-        this.logError(`error opening`);
+        console.log('error opening database');
         reject(event);
       };
 
@@ -66,16 +77,14 @@ export class Database {
          * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#structuring_the_database
          */
 
-        const {oldVersion, newVersion} = event;
-        console.log(`>>>>>>>> IDB`, {oldVersion, newVersion})
-
         const db = open.result;
-        const versionStoreName = this.sw.options.cache?.version?.storeName;
-        if (versionStoreName && !db.objectStoreNames.contains(versionStoreName)) {
-          db.createObjectStore(versionStoreName);
-        }
+        console.log(`>>> ${db.name}#${db.version} upgrade >>>`, `${event.oldVersion} -> ${event.newVersion}`);
 
-        // this.sw.getDatabaseHandlers().forEach(dbHandler => dbHandler.onupgradeneeded(open.result, event));
+        Object.values(this.options.storeNames).forEach(storeName => {
+          if (!db.objectStoreNames.contains(storeName)) {
+            db.createObjectStore(storeName);
+          }
+        });
       };
 
       open.onblocked = (event: Event) => {
@@ -86,59 +95,29 @@ export class Database {
          * Поэтому надо еще раз предпринять попытку, чтобы закрыть соединение с db.
          * https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onblocked
          */
-        this.close();
-        this.logError(`close in 'open.onblocked' handler`);
+        // const db = open.result;
+        // db.close() // err: This request has not finished
+        console.error(`database is blocked`);
       }
 
-      open.onsuccess = (event: Event) => resolve(open.result);
-    });
-  }
-
-  get(storeName: string, key: IDBValidKey): Promise<any | undefined> {
-    return new Promise((resolve, reject) => {
-      this.log(`get value from ${this.logPart(storeName, key)}`)
-      const req = this.db
-        .transaction([storeName], 'readonly')
-        .objectStore(storeName)
-        .get(key);
-      req.onerror = (event: Event) => {
-        this.logError(`error getting value from ${this.logPart(storeName, key)}`);
-        reject(event);
+      open.onsuccess = (event: Event) => {
+        const db = open.result;
+        db.onversionchange = (event: IDBVersionChangeEvent) => {
+          db.close();
+          console.log(`close ${db.name}#${db.version} in 'db.onversionchange' handler, new version '${event.newVersion}' of this db is ready`)
+        }
+        resolve(db);
       };
-      req.onsuccess = (event: Event) => {
-        let result = req.result
-        if (result === undefined)
-          this.logWarn(`value is undefined -> ${this.logPart(storeName, key)}`);
-        else
-          result = JSON.parse(result);
-        resolve(result);
-      }
     });
   }
 
-  put(storeName: string, value: any, key?: IDBValidKey): Promise<IDBValidKey> {
-    return new Promise((resolve, reject) => {
-      this.log(`put '${value}' to ${this.logPart(storeName, key)}`);
-      const req = this.db
-        .transaction([storeName], 'readwrite')
-        .objectStore(storeName)
-        .put(value, key);
-      req.onerror = (event: Event) => {
-        self.logError(`error putting value '${value}' to ${this.logPart(storeName, key)}`);
-        reject(event);
-      };
-      req.onsuccess = (event: Event) => {
-        resolve(req.result);
-      }
-    });
-  }
 
   toString(): string {
-    return `db[${this.name}#${this.version || 1}]`;
+    return `${this.name}#${this.db.version || 'unknown'}`;
   }
 
   logPart(storeName: string, key?: IDBValidKey) {
-    return `${this.toString()}.store[${storeName}].key[${key}]`;
+    return `${storeName}.${key}`;
   }
 
   log(...args) {
