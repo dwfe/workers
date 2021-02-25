@@ -6,12 +6,13 @@ declare const self: IServiceWorkerGlobalScope;
 
 export class DatabaseController {
 
-  static DB_VERSION_STORE_KEY = 'version';
+  storeNames: IDatabaseStoreNames;
   dbVersionStoreName: string;
   cacheVersionStoreName: string;
+  static DB_VERSION_STORE_KEY = 'version';
 
-  constructor(public database: Database,
-              public storeNames: IDatabaseStoreNames) {
+  constructor(public database: Database) {
+    this.storeNames = database.options.storeNames;
     this.dbVersionStoreName = this.storeNames.dbVersion;
     this.cacheVersionStoreName = this.storeNames.cacheItemVersion;
   }
@@ -32,7 +33,6 @@ export class DatabaseController {
 
   get(storeName: string, key: IDBValidKey): Promise<any | undefined> {
     return new Promise((resolve, reject) => {
-      // this.database.log(`get value from ${this.database.logPart(storeName, key)}`)
       const req = this.db
         .transaction([storeName], 'readonly')
         .objectStore(storeName)
@@ -44,7 +44,7 @@ export class DatabaseController {
       req.onsuccess = (event: Event) => {
         let result = req.result
         if (result === undefined)
-          this.database.logWarn(`value is undefined -> ${this.database.logPart(storeName, key)}`);
+          this.database.logWarn(`value ${this.database.logPart(storeName, key)} is undefined`);
         resolve(result);
       }
     });
@@ -52,7 +52,6 @@ export class DatabaseController {
 
   put(storeName: string, value: any, key?: IDBValidKey): Promise<IDBValidKey> {
     return new Promise((resolve, reject) => {
-      // this.database.log(`put '${value}' to ${this.database.logPart(storeName, key)}`);
       const req = this.db
         .transaction([storeName], 'readwrite')
         .objectStore(storeName)
@@ -99,8 +98,7 @@ export class DatabaseController {
   }
 
   async dbVersionStoreInit() {
-    const optDbVersion = this.database.optDbVersion;
-    await this.putDbVersion(optDbVersion);
+    await this.putDbVersion(this.database.optionDbVersion);
   }
 
 //endregion

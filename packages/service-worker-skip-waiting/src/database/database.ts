@@ -18,8 +18,8 @@ export class Database {
       throw new Error(`This browser doesn't support IndexedDB`)
   }
 
-  get optDbVersion(): number {
-    return this.options.version || 1;
+  get optionDbVersion(): number {
+    return this.options?.version || 1;
   }
 
   async init(): Promise<void> {
@@ -31,7 +31,7 @@ export class Database {
     this.isReady = false;
     this.name = this.options.name;
     this.db = await this.open(); // открыть базу в текущей ее версии
-    this.controller = new DatabaseController(this, this.options.storeNames);
+    this.controller = new DatabaseController(this);
     const checker = new DatabaseChecker(this.controller, this.sw.options);
     const checkResult = await checker.run();
 
@@ -47,59 +47,42 @@ export class Database {
     self.log(` - ${this.toString()} is opened`)
   }
 
-  close() {
-    this.db?.close();
-    this.db = null as any;
-  }
-
   open(version?: number): Promise<IDBDatabase> {
-    if (this.db) this.close();
+    this.close();
     return new Promise((resolve, reject) => {
       const open = self.indexedDB.open(this.name, version);
-
       open.onerror = (event: Event) => {
-        console.log('error opening database');
+        console.error('error opening database');
         reject(event);
       };
-
       open.onupgradeneeded = (event: IDBVersionChangeEvent) => {
         /**
-         * 1. Создать/обновить/удалить хранилище db можно в обработчике 'onupgradeneeded'(еще здесь можно создать индексы).
-         *   - попытка создать/удалить хранилище, которое не существует, вызовет ошибку;
-         *   - при необходимости изменить уже существующее хранилище сначала надо удалить старое хранилище, затем создать новое с нужными параметрами и содержимым
+         * 1. Создать/удалить хранилище db можно в обработчике 'onupgradeneeded'(еще здесь можно создать индексы).
+         *   - попытка удалить хранилище, которое не существует, вызовет ошибку;
          * Если обработчик 'onupgradeneeded' отработал без ошибок, только тогда будет запущен обработчик 'onsuccess'.
          * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#creating_or_updating_the_version_of_the_database
          *
-         * 2. От структуры хранилища - IDBObjectStoreParameters - зависит:
-         *   - какого типа может быть значение в хранилище: любого типа, либо только JavaScript objects;
-         *   - надо ли передавать ключ при сохранении значения: если ключ определен в keyPath, тогда не надо;
-         *   - по какому ключу можно получить значение: ключ как строка; ключ определенный в keyPath.
+         * 2. От параметров {keyPath, autoIncrement}: IDBObjectStoreParameters - зависит:
+         *   - какого типа может быть значение в хранилище: только JavaScript object, либо любого типа;
+         *   - надо ли передавать ключ при сохранении значения в db: если определен keyPath, тогда не надо;
+         *   - по какому ключу можно получить значение: по keyPath, либо произвольная строка.
          * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#structuring_the_database
          */
-
         const db = open.result;
         console.log(`>>> ${db.name}#${db.version} upgrade >>>`, `${event.oldVersion} -> ${event.newVersion}`);
 
         Object.values(this.options.storeNames).forEach(storeName => {
           if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName);
+            db.createObjectStore(storeName, {keyPath: null, autoIncrement: false});
           }
         });
       };
-
       open.onblocked = (event: Event) => {
-        /**
-         * Сейчас происходит изменение версии db.
-         * Текущее открытое соединение было открыто для старой версией db.
-         * По какой-то причине обработчик db.onversionchange не закрыл это соединение.
-         * Поэтому надо еще раз предпринять попытку, чтобы закрыть соединение с db.
-         * https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onblocked
-         */
+        // https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onblocked
         // const db = open.result;
         // db.close() // err: This request has not finished
-        console.error(`database is blocked`);
+        console.error(`Database is blocked. Your database version can't be upgraded because the app is open somewhere else`);
       }
-
       open.onsuccess = (event: Event) => {
         const db = open.result;
         db.onversionchange = (event: IDBVersionChangeEvent) => {
@@ -111,6 +94,10 @@ export class Database {
     });
   }
 
+  close() {
+    this.db?.close();
+    this.db = null as any;
+  }
 
   toString(): string {
     return `${this.name}#${this.db.version || 'unknown'}`;

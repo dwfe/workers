@@ -31,8 +31,8 @@ export class CacheVersionLoader {
   async fetch(option: ICacheItemOptions): Promise<string> {
     const path = option.version.fetchPath as string;
     this.log(`get '${option.title}' version from '${path}'`);
-    const version = 'v32'
-    //   await fetch(path).then(resp => {
+    const version = 'v32';
+    // await self.timeout(10_000, fetch(path)).then(resp => {
     //   if (resp.ok)
     //     return resp.text();
     //   this.logError(`status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)

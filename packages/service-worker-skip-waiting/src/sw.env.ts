@@ -10,7 +10,6 @@ export class SwEnv {
   database: Database;
   cache: Cache;
   exchange: Exchange;
-
   cacheVersionLoader: CacheVersionLoader;
 
   constructor(public scope: string,
@@ -35,7 +34,7 @@ export class SwEnv {
 
   waitForReady(): Promise<void> {
     return new Promise(async (resolve, reject) => {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 10; i++) {
         await self.delay(5_000)
         if (this.isReady) break;
       }

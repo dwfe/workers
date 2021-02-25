@@ -32,7 +32,7 @@ export class DatabaseChecker {
      * версии из хранилища, тогда надо проапгрейдить db
      */
     const dbVersion = await this.dbController.getDbVersion() || 1;
-    return this.dbController.database.optDbVersion > dbVersion;
+    return this.dbController.database.optionDbVersion > dbVersion;
   }
 
   async isDbVersionStoreInitNeeded(): Promise<boolean> {
