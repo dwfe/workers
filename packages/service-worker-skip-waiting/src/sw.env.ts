@@ -2,8 +2,8 @@ declare const self: IServiceWorkerGlobalScope;
 import {ICacheOptions, IDatabaseOptions, ISwEnvOptions} from './сontract';
 import {IServiceWorkerGlobalScope} from '../types';
 import {Database} from './database/database';
+import {Exchange} from './exchange/exchange';
 import {Cache} from './cache/cache';
-import {Exchange} from './exchange';
 
 export class SwEnv {
   database: Database;

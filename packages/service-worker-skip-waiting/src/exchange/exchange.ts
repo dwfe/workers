@@ -1,7 +1,7 @@
 declare const self: IServiceWorkerGlobalScope;
-import {IMessageEvent, MessageType} from './сontract';
-import {IServiceWorkerGlobalScope} from '../types';
-import {SwEnv} from './sw.env';
+import {IMessageEvent, MessageType} from '../сontract';
+import {IServiceWorkerGlobalScope} from '../../types';
+import {SwEnv} from '../sw.env';
 
 /**
  * Отвечает за обработку/обмен сообщениями
