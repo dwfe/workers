@@ -63,6 +63,11 @@ export class Database {
               db.createObjectStore(storeName, {keyPath: null, autoIncrement: false});
             }
           });
+        switch (event.newVersion) {
+          // case X:
+          //   // создать/удалить/перезаполнить/...  хранилища именно в момент апгрейда на версию X
+          //   break;
+        }
       };
       open.onblocked = (event: Event) => {
         // https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onblocked

@@ -63,9 +63,9 @@
     // https://developers.google.com/web/updates/2018/07/page-lifecycle-api
     document.addEventListener('resume', event => checkForUpdate());
 
-    setTimeout(() => {
+    setInterval(() => {
       navigator.serviceWorker.controller?.postMessage({type: "GET_INFO"})
-    }, 2500);
+    }, 5_000);
   }
 </script>
 </body>
