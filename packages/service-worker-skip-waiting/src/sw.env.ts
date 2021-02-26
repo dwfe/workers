@@ -1,6 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheOptions, IDatabaseOptions, ISwEnvOptions} from './сontract';
-import {CacheVersionLoader} from './cache.version-loader';
 import {IServiceWorkerGlobalScope} from '../types';
 import {Database} from './database/database';
 import {Cache} from './cache/cache';
@@ -10,19 +9,12 @@ export class SwEnv {
   database: Database;
   cache: Cache;
   exchange: Exchange;
-  cacheVersionLoader: CacheVersionLoader;
 
   constructor(public scope: string,
               public options: ISwEnvOptions) {
     this.database = new Database(this, options.database as IDatabaseOptions);
     this.cache = new Cache(this, options.cache as ICacheOptions);
     this.exchange = new Exchange(this);
-    this.cacheVersionLoader = new CacheVersionLoader(this.database, options);
-  }
-
-  get isReady(): boolean {
-    return this.database.isReady
-      && this.cache.isReady;
   }
 
   async init(): Promise<void> {
@@ -32,10 +24,9 @@ export class SwEnv {
     self.log('initialization completed')
   }
 
-  async updateCacheVersions(): Promise<void> {
-    const changesCount = await this.cacheVersionLoader.run();
-    if (changesCount > 0)
-      await this.cache.init();
+  get isReady(): boolean {
+    return this.database.isReady
+      && this.cache.isReady;
   }
 
   waitForReady(): Promise<void> {
@@ -49,6 +40,12 @@ export class SwEnv {
         reject('sw initialization timeout');
       }
     });
+  }
+
+  async updateCacheVersions(): Promise<void> {
+    const store = this.database.getCacheVersionStore();
+    if (await store.update() > 0)
+      await this.cache.init();
   }
 
 }

@@ -1,25 +1,19 @@
+declare const self: IServiceWorkerGlobalScope;
+import {CacheVersionStore} from './store/cache-version.store';
 import {DatabaseController} from './database.controller';
 import {IServiceWorkerGlobalScope} from '../../types';
-import {DatabaseChecker} from './database.checker';
 import {IDatabaseOptions} from '../сontract';
 import {SwEnv} from '../sw.env';
 
-declare const self: IServiceWorkerGlobalScope;
-
 export class Database {
-  name!: string;
-  db!: IDBDatabase;
-  controller!: DatabaseController;
-  isReady = false;
+  private db!: IDBDatabase;
+  private controller!: DatabaseController;
+  public isReady = false;
 
-  constructor(public sw: SwEnv,
-              public options: IDatabaseOptions) {
+  constructor(private sw: SwEnv,
+              private options: IDatabaseOptions) {
     if (!self.indexedDB)
       throw new Error(`This browser doesn't support IndexedDB`)
-  }
-
-  get optionDbVersion(): number {
-    return this.options?.version || 1;
   }
 
   async init(): Promise<void> {
@@ -29,30 +23,21 @@ export class Database {
       return;
     }
     this.isReady = false;
-    this.name = this.options.name;
-    this.db = await this.open(); // открыть базу в текущей ее версии
-    this.controller = new DatabaseController(this);
-    const checker = new DatabaseChecker(this.controller, this.sw.options);
-    const checkResult = await checker.run();
-
-    // Скорректировать структуру базы данных
-    if (checkResult.upgradeNeeded) {
-      let version = this.db.version;
-      this.db = await this.open(++version); // переоткрыть базу с новой версией => запустится апгрейд базы данных
-    }
-    // Предопределенные хранилища должны иметь ожидаемое содержимое
-    await this.controller.initStores(checkResult);
+    this.db = await this.open();
+    this.controller = new DatabaseController(this, this.db, this.sw.options);
+    await this.controller.fixPredefinedContent();
 
     this.isReady = true;
     self.log(` - ${this.toString()} is opened`)
   }
 
-  open(version?: number): Promise<IDBDatabase> {
+  private open(): Promise<IDBDatabase> {
     this.close();
+    const {name, version} = this.options;
     return new Promise((resolve, reject) => {
-      const open = self.indexedDB.open(this.name, version);
+      const open = self.indexedDB.open(name, version);
       open.onerror = (event: Event) => {
-        console.error('error opening database');
+        console.error(`error opening database '${name}#${version}'.`, event?.target?.['error']?.message);
         reject(event);
       };
       open.onupgradeneeded = (event: IDBVersionChangeEvent) => {
@@ -71,16 +56,18 @@ export class Database {
         const db = open.result;
         console.log(`>>> ${db.name}#${db.version} upgrade >>>`, `${event.oldVersion} -> ${event.newVersion}`);
 
-        Object.values(this.options.storeNames).forEach(storeName => {
-          if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName, {keyPath: null, autoIncrement: false});
-          }
-        });
+        Object // создать недостающие хранилища
+          .values(this.options.storeNames)
+          .forEach(storeName => {
+            if (!db.objectStoreNames.contains(storeName)) {
+              db.createObjectStore(storeName, {keyPath: null, autoIncrement: false});
+            }
+          });
       };
       open.onblocked = (event: Event) => {
         // https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onblocked
         // const db = open.result;
-        // db.close() // err: This request has not finished
+        // db.close() // error: This request has not finished
         console.error(`Database is blocked. Your database version can't be upgraded because the app is open somewhere else`);
       }
       open.onsuccess = (event: Event) => {
@@ -99,8 +86,18 @@ export class Database {
     this.db = null as any;
   }
 
+
+//region Getter'ы хранилищ
+
+  getCacheVersionStore(): CacheVersionStore {
+    return this.controller.getStore(this.options.storeNames.cacheVersion) as any as CacheVersionStore;
+  }
+
+//endregion
+
+
   toString(): string {
-    return `${this.name}#${this.db.version || 'unknown'}`;
+    return `${this.db?.name}#${this.db?.version}`;
   }
 
   logPart(storeName: string, key?: IDBValidKey) {

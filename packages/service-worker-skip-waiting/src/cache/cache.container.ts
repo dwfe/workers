@@ -1,26 +1,21 @@
-import {DatabaseController} from '../database/database.controller';
-import {ICacheContainer} from '../сontract';
+import {CacheVersionStore} from '../database/store/cache-version.store';
+import {ICacheContainer, ICacheItemOptions} from '../сontract';
 import {CacheName} from './item/cache.name';
 import {CacheItem} from './item/cache.item';
-import {Cache} from './cache';
 
 export class CacheContainer implements ICacheContainer {
 
   private container: Map<string, CacheItem> = new Map();
 
-  constructor(private cache: Cache) {
-  }
-
-  get dbController(): DatabaseController {
-    return this.cache.sw.database.controller;
+  constructor(private optItems: ICacheItemOptions[],
+              private scope: string,
+              private versionStore: CacheVersionStore) {
   }
 
   async init(): Promise<void> {
-    const {items} = this.cache.options;
-    for (let i = 0; i < items.length; i++) {
-      const dto = items[i];
+    for (let i = 0; i < this.optItems.length; i++) {
+      const dto = this.optItems[i];
       const {title, match} = dto;
-      const scope = this.cache.sw.scope;
 
       /**
        * Действия для получения версии кеша:
@@ -29,11 +24,11 @@ export class CacheContainer implements ICacheContainer {
        */
       let version = dto.version.value;
       if (!version) {
-        version = await this.dbController.getCacheVersion(title);
+        version = await this.versionStore.get(title);
         if (!version)
           throw new Error(`sw cache container can't get version for '${title}'`);
       }
-      const cacheName = new CacheName(scope, title, version);
+      const cacheName = new CacheName(this.scope, title, version);
       const item = new CacheItem(cacheName, {match});
       this.container.set(cacheName.value, item);
     }

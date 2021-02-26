@@ -6,8 +6,7 @@ const sw = new SwEnv('/', {
     name: 'db_local',
     version: 1,
     storeNames: {
-      dbVersion: 'db_version',
-      cacheItemVersion: 'cache_item_version',
+      cacheVersion: 'cache_version',
     }
   },
   cache: {

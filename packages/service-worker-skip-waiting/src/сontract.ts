@@ -15,23 +15,31 @@ export interface IDatabaseOptions {
    *   - изменился состав хранилищ (так называются таблицы в IndexedDB);
    *   - изменилась структура какого-то хранилища.
    * Когда меняется версия db (либо когда создается новая db), тогда сразу после открытия базы сработает обработчик 'onupgradeneeded'.
-   * Поэтому просто изменить версию недостаточно, надо еще внести изменения в логику обработчика 'onupgradeneeded'.
-   *
    * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#creating_or_updating_the_version_of_the_database
    */
-  version: number;
+  version: number; // Важно! Значение можно только увеличивать.
   storeNames: IDatabaseStoreNames;
 }
 
 export interface IDatabaseStoreNames {
-  dbVersion: string;
-  cacheItemVersion: string;
+  cacheVersion: string;
 }
 
-export interface IDatabaseCheckResult {
-  upgradeNeeded?: boolean;
-  dbVersionStoreInitNeeded?: boolean;
-  cacheVersionStoreFetchNeeded?: boolean;
+export interface IDatabaseStore<TValue = any> {
+
+  name: string;
+
+  get(key: IDBValidKey): Promise<TValue | undefined>;
+
+  put(value: TValue, key?: IDBValidKey): Promise<IDBValidKey>;
+
+  /**
+   * По-идее, хранилище откуда-то берет свои данные.
+   * Обновить данные значит: откуда-то взять данные, записать в хранилище и сообщить сколько
+   *                         записей было обновлено по отношению к предыдущему состоянию хранилища.
+   */
+  update(): Promise<number>; // возвращает количество записей, которые были обновлены
+
 }
 
 //endregion

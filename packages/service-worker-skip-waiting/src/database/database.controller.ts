@@ -1,34 +1,27 @@
-import {IDatabaseCheckResult, IDatabaseStoreNames} from '../сontract';
+declare const self: IServiceWorkerGlobalScope;
+import {ICacheOptions, IDatabaseStore, IDatabaseStoreNames, ISwEnvOptions} from '../сontract';
+import {CacheVersionStore} from './store/cache-version.store';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {Database} from './database';
 
-declare const self: IServiceWorkerGlobalScope;
-
 export class DatabaseController {
+  private stores: Map<string, IDatabaseStore>;
 
-  storeNames: IDatabaseStoreNames;
-  dbVersionStoreName: string;
-  cacheVersionStoreName: string;
-  static DB_VERSION_STORE_KEY = 'version';
-
-  constructor(public database: Database) {
-    this.storeNames = database.options.storeNames;
-    this.dbVersionStoreName = this.storeNames.dbVersion;
-    this.cacheVersionStoreName = this.storeNames.cacheItemVersion;
+  constructor(private database: Database,
+              private db: IDBDatabase,
+              private options: ISwEnvOptions) {
+    const storeNames = options.database?.storeNames as IDatabaseStoreNames;
+    this.stores = new Map([
+      [storeNames.cacheVersion, new CacheVersionStore(storeNames.cacheVersion, options.cache as ICacheOptions, this)],
+    ]);
   }
 
-  get db(): IDBDatabase {
-    return this.database.db;
+  getStore(storeName: string): IDatabaseStore | undefined {
+    return this.stores.get(storeName);
   }
 
-  contains(storeName: string): boolean {
-    return this.db.objectStoreNames.contains(storeName);
-  }
-
-  isAllStoresExists(): boolean {
-    return Object.values(this.storeNames)
-      .map(storeName => this.contains(storeName))
-      .every(isContains => isContains === true)
+  getStores(): IDatabaseStore[] {
+    return Array.from(this.stores.values());
   }
 
   get(storeName: string, key: IDBValidKey): Promise<any | undefined> {
@@ -38,13 +31,13 @@ export class DatabaseController {
         .objectStore(storeName)
         .get(key);
       req.onerror = (event: Event) => {
-        this.database.logError(`error getting value from ${this.database.logPart(storeName, key)}`);
+        this.logError(`error getting value from ${this.logPart(storeName, key)}`);
         reject(event);
       };
       req.onsuccess = (event: Event) => {
         let result = req.result
         if (result === undefined)
-          this.database.logWarn(`value ${this.database.logPart(storeName, key)} is undefined`);
+          this.logWarn(`value ${this.logPart(storeName, key)} is undefined`);
         resolve(result);
       }
     });
@@ -57,77 +50,38 @@ export class DatabaseController {
         .objectStore(storeName)
         .put(value, key);
       req.onerror = (event: Event) => {
-        self.logError(`error putting value '${value}' to ${this.database.logPart(storeName, key)}`);
+        self.logError(`error putting value '${value}' to ${this.logPart(storeName, key)}`);
         reject(event);
       };
-      req.onsuccess = (event: Event) => {
-        resolve(req.result);
-      }
+      req.onsuccess = (event: Event) => resolve(req.result);
     });
   }
 
-  async initStores(checkResult: IDatabaseCheckResult): Promise<void> {
-    if (checkResult.dbVersionStoreInitNeeded) {
-      await this.dbVersionStoreInit();
-    }
-    if (checkResult.cacheVersionStoreFetchNeeded) {
-      await this.database.sw.cacheVersionLoader.run();
-    }
-  }
-
-//region Хранилище версии базы данных
-
-  async getDbVersion(): Promise<any | undefined> {
-    return this.dbVersionDBAction('get');
-  }
-
-  async putDbVersion(version: number): Promise<IDBValidKey> {
-    return this.dbVersionDBAction('put', version);
-  }
-
-  private dbVersionDBAction(action: 'get' | 'put', version?: number) {
-    const key = DatabaseController.DB_VERSION_STORE_KEY;
-    switch (action) {
-      case 'get':
-        return this.get(this.dbVersionStoreName, key);
-      case 'put':
-        if (!version)
-          throw new Error(`sw invalid version '${version} put to ${this.database.logPart(this.dbVersionStoreName, key)}'`);
-        return this.put(this.dbVersionStoreName, version, key);
+  async fixPredefinedContent(): Promise<void> {
+    /**
+     * Предопределенные хранилища должны иметь ожидаемое содержимое
+     */
+    const stores = this.getStores();
+    for (let i = 0; i < stores.length; i++) {
+      await stores[i].update();
     }
   }
 
-  async dbVersionStoreInit() {
-    await this.putDbVersion(this.database.optionDbVersion);
+
+  logPart(storeName: string, key?: IDBValidKey) {
+    return this.database.logPart(storeName, key);
   }
 
-//endregion
-
-
-//region Хранилище версий кешей
-
-  async getCacheVersion(title: string): Promise<any | undefined> {
-    return this.cacheVersionDBAction('get', title);
+  log(...args) {
+    this.database.log(...args);
   }
 
-  async putCacheVersion(title: string, version: string): Promise<IDBValidKey> {
-    return this.cacheVersionDBAction('put', title, version);
+  logWarn(...args) {
+    this.database.logWarn(...args);
   }
 
-  private cacheVersionDBAction(action: 'get' | 'put', title: string, version?: string) {
-    if (!title)
-      throw new Error(`invalid title '${title}'`);
-
-    switch (action) {
-      case 'get':
-        return this.get(this.cacheVersionStoreName, title);
-      case 'put':
-        if (!version)
-          throw new Error(`sw invalid version '${version}' put to ${this.database.logPart(this.cacheVersionStoreName, title)}'`);
-        return this.put(this.cacheVersionStoreName, version, title);
-    }
+  logError(...args) {
+    this.database.logError(...args);
   }
-
-//endregion
 
 }

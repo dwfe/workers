@@ -8,12 +8,12 @@ import {SwEnv} from '../sw.env';
 declare const self: IServiceWorkerGlobalScope;
 
 export class Cache {
-  container!: ICacheContainer;
-  cleaner!: ICacheCleaner;
-  isReady = false;
+  private container!: ICacheContainer;
+  private cleaner!: ICacheCleaner;
+  public isReady = false;
 
-  constructor(public sw: SwEnv,
-              public options: ICacheOptions) {
+  constructor(private sw: SwEnv,
+              private options: ICacheOptions) {
     if (!self.caches)
       throw new Error(`This browser doesn't support Cache API`)
   }
@@ -26,7 +26,7 @@ export class Cache {
     }
     this.isReady = false;
 
-    this.container = new CacheContainer(this);
+    this.container = new CacheContainer(this.options.items, this.sw.scope, this.sw.database.getCacheVersionStore());
     this.cleaner = new CacheCleaner(this);
     await this.container.init();
 
