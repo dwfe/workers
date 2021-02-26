@@ -25,7 +25,7 @@ export class Database {
     this.isReady = false;
     this.db = await this.open();
     this.controller = new DatabaseController(this, this.db, this.sw.options);
-    await this.controller.fixPredefinedContent();
+    await this.controller.fixPredefined();
 
     this.isReady = true;
     self.log(` - ${this.toString()} is opened`)
@@ -95,7 +95,7 @@ export class Database {
 //region Getter'ы хранилищ
 
   getCacheVersionStore(): CacheVersionStore {
-    return this.controller.getStore(this.options.storeNames.cacheVersion) as any as CacheVersionStore;
+    return this.controller?.getStore(this.options.storeNames.cacheVersion) as any as CacheVersionStore;
   }
 
 //endregion

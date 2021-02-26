@@ -34,7 +34,8 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
   }
 
   /**
-   * Хранилище содержит только те кеши, версии которых планируется запрашивать с сервера
+   * Хранилище содержит только те записи {title кеша => версия кеша},
+   * версии которых планируется запрашивать с сервера
    */
   controlledItems(): ICacheItemOptions[] {
     return this.options.items.filter(item => item.version.fetchPath);
@@ -58,11 +59,29 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
     return count;
   }
 
+  async restore(): Promise<number> {
+    this.log(`restoring records…`)
+    let count = 0;
+    const items = this.controlledItems();
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const {title} = item;
+      const version = await this.get(title);
+      if (version === undefined) {
+        const serverVersion = await self.timeout(10_000, this.fetch(item));
+        await this.put(serverVersion, title);
+        count++;
+      }
+    }
+    this.log(`restored [${count}] records`)
+    return count;
+  }
+
   async fetch(option: ICacheItemOptions): Promise<string> {
     const path = option.version.fetchPath as string;
     this.log(`get '${option.title}' version from '${path}'`);
-    const version = 'v32';
-    // await self.timeout(10_000, fetch(path)).then(resp => {
+    const version = 'v1';
+    // const version = await self.timeout(10_000, fetch(path)).then(resp => {
     //   if (resp.ok)
     //     return resp.text();
     //   this.logError(`status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)

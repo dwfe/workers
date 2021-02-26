@@ -16,7 +16,7 @@ const sw = new SwEnv('/', {
         title: 'app',
         version: {
           fetchPath: '/get/app/version'
-          // value: 'v12.0.4'
+          // value: 'v1'
         },
         match: {
           order: 10,
@@ -28,7 +28,7 @@ const sw = new SwEnv('/', {
         title: 'tiles',
         version: {
           fetchPath: '/get/tiles/version'
-          // value: 'v3'
+          // value: 'v1'
         },
         match: {
           order: 1,
