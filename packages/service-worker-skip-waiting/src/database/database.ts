@@ -77,6 +77,7 @@ export class Database {
                   storeParameters = {keyPath: null, autoIncrement: false};
               }
               db.createObjectStore(storeName, storeParameters);
+              console.log(`  create '${storeName}'`,)
             }
           });
         switch (event.newVersion) {
@@ -84,6 +85,7 @@ export class Database {
           //   // удалить/перезаполнить/...  хранилища именно в момент апгрейда на версию X
           //   break;
         }
+        console.log(`>>> upgrade completed >>>`);
       };
       open.onblocked = (event: Event) => {
         // https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onblocked

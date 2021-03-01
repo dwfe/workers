@@ -4,7 +4,7 @@ importScripts('module.sw.js');
 const sw = new SwEnv('/', {
   database: {
     name: 'db_local',
-    version: 1,
+    version: 2,
     storeNames: {
       cacheVersion: 'cache_version',
     }
