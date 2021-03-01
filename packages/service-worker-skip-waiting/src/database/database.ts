@@ -60,7 +60,7 @@ export class Database {
          *
          * 2. От параметров {keyPath, autoIncrement}: IDBObjectStoreParameters - зависит:
          *   - какого типа может быть значение в хранилище: только JavaScript object, либо еще и примитивы;
-         *   - надо ли передавать ключ при сохранении значения в db: если определен keyPath, тогда не надо;
+         *   - надо ли передавать ключ при сохранении значения в db: если определен keyPath или autoIncrement, тогда не надо;
          *   - по какому ключу можно получить значение: по keyPath, либо произвольная строка.
          * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#structuring_the_database
          */
@@ -77,7 +77,7 @@ export class Database {
                   storeParameters = {keyPath: null, autoIncrement: false};
               }
               db.createObjectStore(storeName, storeParameters);
-              console.log(`  create '${storeName}'`,)
+              console.log(`  - create '${storeName}'`,)
             }
           });
         switch (event.newVersion) {

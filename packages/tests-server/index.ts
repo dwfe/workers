@@ -28,6 +28,14 @@ app.get('/', (req, res) => {
   res.send(body)
 })
 
+app.get('/version/app', (req, res) => {
+  res.send('32.0.438')
+})
+
+app.get('/version/tiles', (req, res) => {
+  res.send('0')
+})
+
 app.listen(port, () => {
   console.log(`> the server is running, try http://localhost:${port}`)
 })

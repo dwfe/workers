@@ -4,7 +4,7 @@ importScripts('module.sw.js');
 const sw = new SwEnv('/', {
   database: {
     name: 'db_local',
-    version: 2,
+    version: 1,
     storeNames: {
       cacheVersion: 'cache_version',
     }
@@ -15,7 +15,7 @@ const sw = new SwEnv('/', {
       {
         title: 'app',
         version: {
-          fetchPath: '/get/app/version'
+          fetchPath: '/version/app'
           // value: 'v1'
         },
         match: {
@@ -27,7 +27,7 @@ const sw = new SwEnv('/', {
       {
         title: 'tiles',
         version: {
-          fetchPath: '/get/tiles/version'
+          fetchPath: '/version/tiles'
           // value: 'v1'
         },
         match: {
