@@ -57,12 +57,7 @@ export class DatabaseController {
     });
   }
 
-  async fixPredefined(): Promise<void> {
-    /**
-     * Пользователь доступно удаление записей хранилища через DevTools.
-     * Те хранилища, которые должны иметь ожидаемое содержимое, также должны
-     * уметь его восстанавливать.
-     */
+  async restoreContent(): Promise<void> {
     const stores = this.getStores();
     for (let i = 0; i < stores.length; i++) {
       await stores[i].restore();

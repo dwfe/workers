@@ -2,7 +2,7 @@ declare const self: IServiceWorkerGlobalScope;
 import {CacheVersionStore} from './store/cache-version.store';
 import {DatabaseController} from './database.controller';
 import {IServiceWorkerGlobalScope} from '../../types';
-import {IDatabaseOptions} from '../сontract';
+import {IDatabaseOptions, IDatabaseStoreNames} from '../сontract';
 import {SwEnv} from '../sw.env';
 
 export class Database {
@@ -23,9 +23,19 @@ export class Database {
       return;
     }
     this.isReady = false;
+
+    /**
+     * После этого шага база данных будет открыта и все ожидаемые хранилища будут присутствовать, т.к. пользователю не доступно удаление хранинилищ.
+     * Если пользователь удалил db, тогда она автоматически будет создана и запустится событие onupgradeneeded, в котором должна быть логика на создание требуемых хранилищ.
+     */
     this.db = await this.open();
     this.controller = new DatabaseController(this, this.db, this.sw.options);
-    await this.controller.fixPredefined();
+
+    /**
+     * Через панель DevTools пользователю доступно удаление записей любого из хранилищ.
+     * Поэтому те хранилища, которые должны иметь предопределенное содержимое, также должны уметь его восстанавливать.
+     */
+    await this.controller.restoreContent();
 
     this.isReady = true;
     self.log(` - ${this.toString()} is opened`)
@@ -42,13 +52,14 @@ export class Database {
       };
       open.onupgradeneeded = (event: IDBVersionChangeEvent) => {
         /**
-         * 1. Создать/удалить хранилище db можно в обработчике 'onupgradeneeded'(еще здесь можно создать индексы).
-         *   - попытка удалить хранилище, которое не существует, вызовет ошибку;
+         * 1. Создать/удалить хранилище db можно только в обработчике 'onupgradeneeded'(еще здесь можно создать индексы).
+         *   - попытка создать хранилище, которое не существует, создаст его;
+         *   - попытка удалить хранилище, которое не существует, вызовет ошибку.
          * Если обработчик 'onupgradeneeded' отработал без ошибок, только тогда будет запущен обработчик 'onsuccess'.
          * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#creating_or_updating_the_version_of_the_database
          *
          * 2. От параметров {keyPath, autoIncrement}: IDBObjectStoreParameters - зависит:
-         *   - какого типа может быть значение в хранилище: только JavaScript object, либо любого типа;
+         *   - какого типа может быть значение в хранилище: только JavaScript object, либо еще и примитивы;
          *   - надо ли передавать ключ при сохранении значения в db: если определен keyPath, тогда не надо;
          *   - по какому ключу можно получить значение: по keyPath, либо произвольная строка.
          * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#structuring_the_database
@@ -57,15 +68,20 @@ export class Database {
         console.log(`>>> ${db.name}#${db.version} upgrade >>>`, `${event.oldVersion} -> ${event.newVersion}`);
 
         Object // создать недостающие хранилища
-          .values(this.options.storeNames)
-          .forEach(storeName => {
+          .entries(this.options.storeNames)
+          .forEach(([key, storeName]: [keyof IDatabaseStoreNames, string]) => {
             if (!db.objectStoreNames.contains(storeName)) {
-              db.createObjectStore(storeName, {keyPath: null, autoIncrement: false});
+              let storeParameters: IDBObjectStoreParameters;
+              switch (key) {
+                case 'cacheVersion':
+                  storeParameters = {keyPath: null, autoIncrement: false};
+              }
+              db.createObjectStore(storeName, storeParameters);
             }
           });
         switch (event.newVersion) {
           // case X:
-          //   // создать/удалить/перезаполнить/...  хранилища именно в момент апгрейда на версию X
+          //   // удалить/перезаполнить/...  хранилища именно в момент апгрейда на версию X
           //   break;
         }
       };

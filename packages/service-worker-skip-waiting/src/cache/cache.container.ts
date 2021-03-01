@@ -7,19 +7,21 @@ export class CacheContainer implements ICacheContainer {
 
   private container: Map<string, CacheItem> = new Map();
 
-  constructor(private optItems: ICacheItemOptions[],
+  constructor(private itemsOpt: ICacheItemOptions[],
               private scope: string,
               private versionStore: CacheVersionStore) {
+    if (!itemsOpt?.length)
+      throw new Error(`sw missing description of cache items`);
   }
 
   async init(): Promise<void> {
-    for (let i = 0; i < this.optItems.length; i++) {
-      const dto = this.optItems[i];
+    for (let i = 0; i < this.itemsOpt.length; i++) {
+      const dto = this.itemsOpt[i];
       const {title, match} = dto;
 
       /**
        * Действия для получения версии кеша:
-       *   1) взять значение из поля 'version.value'
+       *   1) взять значение из поля itemOption.version.value
        *   2) иначе взять версию из базы данных
        */
       let version = dto.version.value;

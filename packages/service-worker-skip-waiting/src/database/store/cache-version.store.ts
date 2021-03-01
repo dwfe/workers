@@ -4,6 +4,8 @@ import {DatabaseController} from '../database.controller';
 import {IServiceWorkerGlobalScope} from '../../../types';
 
 export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue> {
+  static TIMEOUT = 10_000;
+
   constructor(public name: string,
               private options: ICacheOptions,
               private dbController: DatabaseController) {
@@ -49,7 +51,7 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
       const item = items[i];
       const {title} = item;
       const version = await this.get(title);
-      const serverVersion = await self.timeout(10_000, this.fetch(item));
+      const serverVersion = await self.timeout(CacheVersionStore.TIMEOUT, this.getVersionFromServer(item));
       if (version !== serverVersion) {
         await this.put(serverVersion, title);
         count++;
@@ -68,7 +70,7 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
       const {title} = item;
       const version = await this.get(title);
       if (version === undefined) {
-        const serverVersion = await self.timeout(10_000, this.fetch(item));
+        const serverVersion = await self.timeout(CacheVersionStore.TIMEOUT, this.getVersionFromServer(item));
         await this.put(serverVersion, title);
         count++;
       }
@@ -77,11 +79,11 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
     return count;
   }
 
-  async fetch(option: ICacheItemOptions): Promise<string> {
+  async getVersionFromServer(option: ICacheItemOptions): Promise<string> {
     const path = option.version.fetchPath as string;
     this.log(`get '${option.title}' version from '${path}'`);
     const version = 'v1';
-    // const version = await self.timeout(10_000, fetch(path)).then(resp => {
+    // const version = await self.timeout(CacheVersionStore.TIMEOUT, fetch(path)).then(resp => {
     //   if (resp.ok)
     //     return resp.text();
     //   this.logError(`status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)

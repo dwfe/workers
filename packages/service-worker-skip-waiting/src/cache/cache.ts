@@ -27,11 +27,15 @@ export class Cache {
     this.isReady = false;
 
     this.container = new CacheContainer(this.options.items, this.sw.scope, this.sw.database.getCacheVersionStore());
-    this.cleaner = new CacheCleaner(this);
     await this.container.init();
+    this.cleaner = new CacheCleaner(this);
 
     this.isReady = true;
     self.log(` - cache is running: ${this.items().map(item => item.cacheName.value).join(', ')}`);
+  }
+
+  private get controlExtentions(): string[] {
+    return this.options.controlExtentions || [];
   }
 
   isControl(url: URL): boolean {
@@ -47,7 +51,7 @@ export class Cache {
     )
       return true;
     const ext = pathname.split('.').pop();
-    return ext ? this.options.controlExtentions.includes(ext) : false;
+    return ext ? this.controlExtentions.includes(ext) : false;
   }
 
   get(strategy: TGetFromCacheStrategy, data: IGetFromCache): Promise<Response | undefined> {
@@ -87,7 +91,7 @@ export class Cache {
         await this.getFromCacheItem(strategy, data);
       } catch (err) {
         const errMassage = `can't pre-cache '${data.logPart}', ${err.message}`;
-        if (throwError) throw new Error(errMassage);
+        if (throwError) throw new Error('sw ' + errMassage);
         self.logError(errMassage);
       }
     }

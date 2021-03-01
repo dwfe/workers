@@ -10,8 +10,10 @@ export class SwEnv {
   cache: Cache;
   exchange: Exchange;
 
-  constructor(public scope: string,
+  constructor(public scope: string, // тут не обязательно указывать полный scope, например, для scope 'http://localhost/' достаточно указать только '/'
               public options: ISwEnvOptions) {
+    if (!scope)
+      throw new Error(`sw scope can't be empty`);
     this.database = new Database(this, options.database as IDatabaseOptions);
     this.cache = new Cache(this, options.cache as ICacheOptions);
     this.exchange = new Exchange(this);
@@ -24,27 +26,27 @@ export class SwEnv {
     self.log('initialization completed')
   }
 
-  get isReady(): boolean {
+  get isReady(): boolean { // должен отвечать максимально быстро
     return this.database.isReady
       && this.cache.isReady;
   }
 
   waitForReady(): Promise<void> {
     return new Promise(async (resolve, reject) => {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 12; i++) {
         await self.delay(5_000)
         if (this.isReady) break;
       }
-      if (this.isReady) resolve();
-      else {
+      if (this.isReady)
+        resolve();
+      else
         reject('sw initialization timeout');
-      }
     });
   }
 
   async updateCacheVersions(): Promise<void> {
     const store = this.database.getCacheVersionStore();
-    if (await store.update() > 0)
+    if (store && await store.update() > 0)
       await this.cache.init();
   }
 
