@@ -62,7 +62,7 @@ export interface ICacheOptions {
 export interface ICacheItemOptions {
   title: string;
   version: {
-    value?: string;     // если не задано, тогда версия кеша будет запрашиваться из IndexedDB из таблицы ICacheOptions.version.storeName
+    value?: string;     // если не задано, тогда версия кеша будет запрашиваться из IndexedDB из таблицы IDatabaseOptions.storeNames.cacheVersion
     fetchPath?: string; // путь до сервиса на сервере, если версию кеша надо получать с сервера
   }
   match: ICacheItemMatchOptions;
