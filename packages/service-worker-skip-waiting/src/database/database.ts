@@ -25,14 +25,14 @@ export class Database {
     this.isReady = false;
 
     /**
-     * После этого шага база данных будет открыта и все ожидаемые хранилища будут присутствовать, т.к. пользователю не доступно удаление хранинилищ.
+     * После 'await this.open()' база данных будет открыта и все ожидаемые хранилища будут присутствовать, т.к. пользователю не доступно удаление хранинилищ.
      * Если пользователь удалил db, тогда она автоматически будет создана и запустится событие onupgradeneeded, в котором должна быть логика на создание требуемых хранилищ.
      */
     this.db = await this.open();
     this.controller = new DatabaseController(this, this.db, this.sw.options);
 
     /**
-     * Через панель DevTools пользователю доступно удаление записей любого из хранилищ.
+     * Через панель DevTools пользователю также доступно удаление записей любого из хранилищ.
      * Поэтому те хранилища, которые должны иметь предопределенное содержимое, также должны уметь его восстанавливать.
      */
     await this.controller.restoreContent();
@@ -58,7 +58,7 @@ export class Database {
          * Если обработчик 'onupgradeneeded' отработал без ошибок, только тогда будет запущен обработчик 'onsuccess'.
          * https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#creating_or_updating_the_version_of_the_database
          *
-         * 2. От параметров {keyPath, autoIncrement}: IDBObjectStoreParameters - зависит:
+         * 2. От параметров {keyPath, autoIncrement}: IDBObjectStoreParameters  зависит:
          *   - какого типа может быть значение в хранилище: только JavaScript object, либо еще и примитивы;
          *   - надо ли передавать ключ при сохранении значения в db: если определен keyPath или autoIncrement, тогда не надо;
          *   - по какому ключу можно получить значение: по keyPath, либо произвольная строка.

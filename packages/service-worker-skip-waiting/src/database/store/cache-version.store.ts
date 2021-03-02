@@ -86,10 +86,10 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
     // const version = await self.timeout(CacheVersionStore.TIMEOUT, fetch(path)).then(resp => {
     //   if (resp.ok)
     //     return resp.text();
-    //   this.logError(`status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)
+    //   this.logError(`fetch version, status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)
     // });
     if (version) return version;
-    throw new Error(`cache '${option.title}'. Invalid version '${version}' fetched from '${path}'`);
+    throw new Error(`sw cache '${option.title}'. Invalid version '${version}' fetched from '${path}'`);
   }
 
 
