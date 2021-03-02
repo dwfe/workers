@@ -8,6 +8,7 @@ import { log } from './src/common'
 
 const SRC = path.resolve(__dirname, 'src')
 const STATIC = path.resolve('../tests-sw-cache-skip-waiting/build')
+// const STATIC = path.resolve('../tests-sw-fetch-is-not-limited-by-scope')
 
 const textParser = bodyParser.text()
 const port = 2020
@@ -28,13 +29,18 @@ app.get('/', (req, res) => {
   res.send(body)
 })
 
-app.get('/version/app', (req, res) => {
-  res.send('32.0.438')
-})
+// app.get('/banana', (req, res) => {
+//   const body = fs.readFileSync(path.join(STATIC, 'banana', 'index.html'))
+//   res.send(body)
+// })
 
-app.get('/version/tiles', (req, res) => {
-  res.send('0')
-})
+// app.get('/version/app', (req, res) => {
+//   res.send('32.0.438')
+// })
+//
+// app.get('/version/tiles', (req, res) => {
+//   res.send('0')
+// })
 
 app.listen(port, () => {
   console.log(`> the server is running, try http://localhost:${port}`)

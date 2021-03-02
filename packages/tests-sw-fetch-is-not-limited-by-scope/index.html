@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Index</title>
+</head>
+<body>
+
+<p>This is Index page = <code>/</code></p>
+
+<p>Go to <a href="/banana">/banana</a></p>
+
+<div id="root" style="display: grid; row-gap: 20px">
+  Please wait 5 seconds...
+</div>
+
+<script>
+  navigator.serviceWorker
+    .register('sw.js', {scope: '/'})
+    .then(reg => console.log(`sw[main] registered, scope: '${reg.scope}'`))
+    .catch(err => console.error('sw[main] registration error', err));
+</script>
+
+<script>
+  function getImage(path) {
+    const img = new Image();
+    img.src = path;
+    return img;
+  }
+  setTimeout(() => {
+    const root = document.getElementById('root');
+    root.innerHTML = '';
+    root.appendChild(getImage('/pic.png'));
+    root.appendChild(getImage('/banana/pic.png'));
+  }, 5_000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Banana</title>
+</head>
+<body>
+
+<p>This is Banana page = <code>/banana</code></p>
+
+<p>Go to <a href="/">Index</a></p>
+
+<div id="root">
+  Please wait 5 seconds...
+</div>
+
+<script>
+  navigator.serviceWorker
+    .register('sw.js', {scope: '/banana/'})
+    .then(reg => console.log(`sw[main] registered, scope: '${reg.scope}'`))
+    .catch(err => console.error('sw[main] registration error', err));
+</script>
+
+<script>
+  function getImage(path) {
+    const img = new Image();
+    img.src = path;
+    return img;
+  }
+  setTimeout(() => {
+    const root = document.getElementById('root');
+    root.innerHTML = '';
+    root.appendChild(getImage('/pic.png'));
+    root.appendChild(getImage('/banana/pic.png'));
+  }, 5_000);
+</script>
+</body>
+</html>
