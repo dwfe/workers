@@ -4,7 +4,7 @@ import {DatabaseController} from '../database.controller';
 import {IServiceWorkerGlobalScope} from '../../../types';
 
 export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue> {
-  static TIMEOUT = 10_000;
+  static TIMEOUT = 20_000;
 
   constructor(public name: string,
               private options: ICacheOptions,
@@ -23,7 +23,7 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
 
   private action(action: 'get' | 'put', title: string, version?: TValue) {
     if (!title)
-      throw new Error(`invalid title '${title}'`);
+      throw new Error(`sw invalid title '${title}'`);
 
     switch (action) {
       case 'get':
