@@ -42,7 +42,7 @@ const sw = new SwEnv('/', {
 sw.init();
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя о новой версии приложения и без ожидания его реакции на это событие
+  self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя и без ожидания его реакции на это событие
   event.waitUntil(
     sw.waitForReady()
       .then(() => self.log('installing…'))

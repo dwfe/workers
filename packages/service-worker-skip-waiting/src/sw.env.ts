@@ -10,7 +10,7 @@ export class SwEnv {
   cache: Cache;
   exchange: Exchange;
 
-  constructor(public scope: string, // тут не обязательно указывать полный scope, например, для scope 'http://localhost/' достаточно указать только '/'
+  constructor(public scope: string, // Используется, например, при определении имени кеша. Задается вручную, чтобы было наглядно видно - этот sw.js работает на таком-то scope. Необязательно указывать полный scope, например, для scope 'http://localhost/' достаточно указать только '/'
               public options: ISwEnvOptions) {
     if (!scope)
       throw new Error(`sw scope can't be empty`);
