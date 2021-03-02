@@ -12,7 +12,7 @@ export class Exchange {
   constructor(private sw: SwEnv) {
   }
 
-  async send(type: MessageType, data, source?: ExtendableMessageEvent['source']) {
+  async send(type: MessageType, data?, source?: ExtendableMessageEvent['source']) {
     if (source) source.postMessage({type, data}, []); // отправить конкретному получателю
     else {
       const clients = await self.clients.matchAll();

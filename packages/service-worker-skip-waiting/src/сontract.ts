@@ -180,7 +180,7 @@ export type MessageType = 'GET_INFO' | 'INFO' | 'RELOAD_PAGE';
 export interface IMessageEvent extends ExtendableMessageEvent {
   data: {
     type: MessageType;
-    data: any;
+    data?: any;
   };
 }
 
