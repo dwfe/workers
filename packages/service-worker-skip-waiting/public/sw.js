@@ -70,9 +70,10 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     self.clients.claim() // переключить всех потенциальных клиентов на новый sw
       .then(() => sw.cache.clean('delete-uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
-      .then(() => self.delay(5_000))
-      .then(() => sw.exchange.send('RELOAD_PAGE')) // важно для кеширующего sw, т.к. рефреш страницы гарантирует, что новая версия приложения запустилась на клиентах
-      .then(() => self.log('activated'))
+      .finally(() => {
+        sw.exchange.send('RELOAD_PAGE'); // важно для кеширующего sw, т.к. рефреш страницы гарантирует, что новая версия приложения запустилась на клиентах
+        self.log('activated')
+      })
   );
 });
 
