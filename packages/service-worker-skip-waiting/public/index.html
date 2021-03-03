@@ -16,7 +16,6 @@
 
     navigator.serviceWorker.addEventListener('message', ({data}) => {
       if (data.type === 'RELOAD_PAGE' && !isFirstInstall) {
-        // выполнить принудительную перезагрузку всех открытых окон приложения пользователя
         window.location.reload();
       }
     });

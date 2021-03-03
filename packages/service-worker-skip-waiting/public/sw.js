@@ -44,7 +44,7 @@ sw.init();
 self.addEventListener('install', event => {
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя и без ожидания его реакции на это событие
   event.waitUntil(
-    sw.waitForReady() // ждать, пока проинициализируется ТЕКУЩАЯ версия sw
+    sw.waitForReady() // ожидание инициализации ТЕКУЩЕЙ(ранее установленной) версии sw, либо первичной инициализации sw (перед первой установкой)
       .then(() => self.log('installing…')) // начинается установка НОВОЙ версии sw
       .then(() => sw.updateCacheVersions())
       .then(() => sw.cache.precache({
