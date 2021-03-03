@@ -68,7 +68,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   self.log('activating…');
   event.waitUntil(
-    self.clients.claim() // переключить всех клиентов на этот новый sw
+    self.clients.claim() // переключить всех потенциальных клиентов на новый sw
       .then(() => sw.cache.clean('delete-uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
       .then(() => self.delay(5_000))
       .then(() => sw.exchange.send('RELOAD_PAGE'))
