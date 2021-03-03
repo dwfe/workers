@@ -24,7 +24,7 @@
 <script>
   function getImage(path) {
     const img = new Image();
-    img.src = path;
+    img.src = `${path}?timestamp=${+new Date()}`;
     return img;
   }
   setTimeout(() => {
