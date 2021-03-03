@@ -16,7 +16,7 @@
 
 <script>
   navigator.serviceWorker
-    .register('sw.js', {scope: '/'})
+    .register('sw-root.js', {scope: '/'})
     .then(reg => console.log(`sw[main] registered, scope: '${reg.scope}'`))
     .catch(err => console.error('sw[main] registration error', err));
 </script>

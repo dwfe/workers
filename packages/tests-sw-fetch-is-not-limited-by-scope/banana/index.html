@@ -16,7 +16,7 @@
 
 <script>
   navigator.serviceWorker
-    .register('sw.js', {scope: '/banana/'})
+    .register('sw-banana.js', {scope: '/banana/'})
     .then(reg => console.log(`sw[main] registered, scope: '${reg.scope}'`))
     .catch(err => console.error('sw[main] registration error', err));
 </script>
