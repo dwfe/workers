@@ -6,7 +6,7 @@
 </head>
 <body>
 <script>
-  if (window.isSecureContext) {
+  if (navigator.serviceWorker) {
     const isFirstInstall = !(navigator.serviceWorker.controller instanceof ServiceWorker); // при первой установке на клиенте еще нет sw
 
     navigator.serviceWorker
