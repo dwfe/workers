@@ -5,7 +5,7 @@ import {CacheCleaner} from './cache.cleaner';
 import {CacheItem} from './item/cache.item';
 import {SwEnv} from '../sw.env';
 
-declare const self: IServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & IServiceWorkerGlobalScope;
 
 export class Cache {
   private container!: ICacheContainer;

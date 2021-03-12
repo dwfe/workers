@@ -4,9 +4,9 @@ import {IServiceWorkerGlobalScope} from '../../types';
 import {Cache} from './cache';
 
 /**
- * Очищать кеш необходимо ввиду следующих причин:
- *   - может измениться формат имени кеша;
- *   - кеш может устареть (версия поменяется).
+ * Очищать кеши необходимо ввиду следующих причин:
+ *   - кеш может устареть (версия поменяется);
+ *   - может измениться формат имени кеша.
  *
  * Например, в какой-то момент времени может оказаться, что приложение хранит кеши с вот такими именами:
  *  const cacheNames = [
@@ -48,14 +48,14 @@ export class CacheCleaner implements ICacheCleaner {
   }
 
   async tryToDelete(strategy: TCacheCleanStrategy, attemptsCount: number): Promise<string[]> {
-    let cacheNames = await this.findToDelete(strategy);
+    let namesToDelete = await this.findToDelete(strategy);
     while (attemptsCount >= 1) {
-      if (cacheNames.length === 0) return cacheNames;
-      await this.delete(cacheNames);
-      cacheNames = await this.findToDelete(strategy);
+      if (namesToDelete.length === 0) return namesToDelete;
+      await this.delete(namesToDelete);
+      namesToDelete = await this.findToDelete(strategy);
       attemptsCount--;
     }
-    return cacheNames;
+    return namesToDelete;
   }
 
   async findToDelete(strategy: TCacheCleanStrategy): Promise<string[]> {

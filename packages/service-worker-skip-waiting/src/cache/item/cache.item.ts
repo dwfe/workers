@@ -88,7 +88,7 @@ export class CacheItem {
     } else if (path) {
       if (path.includes('http:') || path.includes('https:'))
         throw new Error(`path '${path}' not valid because it has a protocol`);
-      path = path[0] === '/' ? path : `/${path}`; // добавить слеш при отсутствии
+      path = path[0] === '/' ? path : `/${path}`; // добавить лидирующий слеш при отсутствии
       const url = new URL(self.location.origin + path); // path обязательно должен быть в пределах origin sw!
       return {
         req: url.href,
