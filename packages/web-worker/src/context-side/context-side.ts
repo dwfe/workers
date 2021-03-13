@@ -1,11 +1,9 @@
-import {fromEvent, merge, Observable, Subject} from 'rxjs'
-import {map, shareReplay, takeUntil, tap} from 'rxjs/operators'
+import {fromEvent, map, merge, Observable, shareReplay, SubjectWrap, takeUntil, tap} from '@do-while-for-each/rxjs'
 import {Ctx, CtxType, IConverter, IMessagePost} from './contract'
 
 export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any> {
 
-  private sender = new Subject<TSend>()
-  private stopper = new Subject()
+  private sender = new SubjectWrap<TSend>()
   private ctxType!: CtxType
   public isDebug = false
 
@@ -16,11 +14,10 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   }
 
   send(data: TSend) {
-    this.sender.next(data)
+    this.sender.setValue(data)
   }
 
-  private send$ = this.sender.asObservable().pipe(
-    takeUntil(this.stopper.asObservable()),
+  private send$ = this.sender.value$.pipe(
     tap(d => this.log('to converter.write', d)),
     map(d => this.converter.write(d)),        // TSend -> TPost
     tap(data => this.log('to postMessage', data)),
@@ -28,7 +25,7 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   )
 
   received$: Observable<TReceived> = fromEvent<MessageEvent<TRead>>(this.ctx, 'message').pipe(
-    takeUntil(this.stopper.asObservable()),
+    takeUntil(this.sender.stopper$),
     tap(event => this.log('to converter.read', event.data)),
     map(event => this.converter.read(event)), // TRead -> TReceived
     tap(data => this.log('to received', data)),
@@ -36,7 +33,6 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
   )
 
   private error$ = fromEvent<MessageEvent>(this.ctx, 'messageerror').pipe(
-    takeUntil(this.stopper.asObservable()),
     tap(event => this.logError('messageerror', event)),
   )
 
@@ -44,13 +40,12 @@ export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any>
     this.send$,
     this.error$,
   ).pipe(
-    takeUntil(this.stopper.asObservable())
+    takeUntil(this.sender.stopper$)
   )
 
   stop() {
     this.log('stopping...')
-    this.stopper.next(true)
-    this.stopper.complete()
+    this.sender.stop()
   }
 
   terminate() {
