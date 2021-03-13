@@ -1,9 +1,9 @@
-import {fromEvent, map, merge, Observable, shareReplay, SubjectWrap, takeUntil, tap} from '@do-while-for-each/rxjs'
+import {fromEvent, map, merge, Observable, shareReplay, Subj, takeUntil, tap} from '@do-while-for-each/rxjs'
 import {Ctx, CtxType, IConverter, IMessagePost} from './contract'
 
 export class ContextSide<TSend = any, TPost = any, TRead = any, TReceived = any> {
 
-  private sender = new SubjectWrap<TSend>()
+  private sender = new Subj<TSend>()
   private ctxType!: CtxType
   public isDebug = false
 
