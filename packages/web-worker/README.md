@@ -8,5 +8,6 @@ Converter variants:
 2. [Circular buffer](https://en.wikipedia.org/wiki/Circular_buffer)
 3. Transferable
 
-###ToDo:
+### ToDo:
+
 - сделать вариант без rxjs
