@@ -64,13 +64,27 @@ export class SwEnv {
   async updateCaches(): Promise<void> {
     const cacheVersionStore = this.database.getCacheVersionStore();
     const changed = await cacheVersionStore.searchForPredefinedChanged();
+    if (changed.length === 0)
+      return;
+    // сначала выполнить прекеш
     for (let i = 0; i < changed.length; i++) {
       const {key: title, sourceValue: version} = changed[i];
       const itemOpt = this.cache.options.items.find(item => item.title === title);
-      if (!itemOpt) continue;
-      const item = CacheItem.of(title as string, version, {match: itemOpt.match});
-
+      if (itemOpt?.precachePaths) {
+        const item = CacheItem.of(title as string, version, {match: itemOpt.match});
+        for (const path of itemOpt.precachePaths) {
+          try {
+            await item.getByStrategy('fetch -> cache', Resource.fetchData(path));
+          } catch (err) {
+            const errMassage = `can't pre-cache '${path}', ${err.message}`;
+            self.logError(errMassage);
+          }
+        }
+      }
     }
+    await this.updateCacheVersions();
+    await this.cache.clean('delete-uncontrolled');
+    this.exchange.send('RELOAD_PAGE');
   }
 
 }

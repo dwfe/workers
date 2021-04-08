@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {CacheItemOptions, ICacheName, IFetchData} from '../../сontract';
+import {CacheItemOptions, ICacheName, IFetchData, noStoreRequestInit, TGetStrategy} from '../../сontract';
 import {IServiceWorkerGlobalScope} from '../../../types';
 import {Resource} from '../../resource/resource';
 import {CacheName} from './cache.name';
@@ -24,16 +24,28 @@ export class CacheItem {
     return self.caches.open(this.cacheName.value);
   }
 
+  async put(resp: Response, data: IFetchData): Promise<void> {
+    const cache = await this.cache();
+    return cache.put(data.req, resp.clone());
+  }
+
   async get(data: IFetchData): Promise<Response | undefined> {
     const cache = await this.cache();
     return cache.match(data.req);
   }
 
-  async put(resp: Response, data: IFetchData): Promise<void> {
-    const cache = await this.cache();
-    cache.put(data.req, resp.clone());
+  getByStrategy(strategy: TGetStrategy, data: IFetchData): Promise<Response | undefined> {
+    switch (strategy) {
+      case 'cache || fetch -> cache':
+        return this.getByStrategy1(data);
+      case 'fetch -> cache || cache':
+        return this.getByStrategy2(data);
+      case 'fetch -> cache':
+        return this.getByStrategy3(data);
+      default:
+        throw new Error(`sw unknown strategy '${strategy}' of CacheItem.getByStrategy(…)`);
+    }
   }
-
 
   /**
    * Стратегия 'cache || fetch -> cache'
@@ -74,6 +86,7 @@ export class CacheItem {
 
 
   private async fetchThenCache(data: IFetchData): Promise<Response> {
+    data.init = CacheItem.requestInit(data.init);
     return self.env.resource.fetchStrict(data)
       .then(async resp => {
         await this.put(resp, data);
@@ -106,6 +119,13 @@ export class CacheItem {
 
   logError(...args) {
     self.logError(`cache '${this.cacheName.value}'`, ...args);
+  }
+
+
+  static requestInit(init?: RequestInit): RequestInit {
+    return init === undefined
+      ? noStoreRequestInit
+      : {...init, ...noStoreRequestInit};
   }
 
 }

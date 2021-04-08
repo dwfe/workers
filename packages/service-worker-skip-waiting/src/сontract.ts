@@ -82,6 +82,7 @@ export interface ICacheItemOptions {
     fetchPath?: string; // путь до сервиса на сервере, если версию кеша надо получать с сервера
   }
   match: ICacheItemMatchOptions;
+  precachePaths?: string[];
 }
 
 export interface ICacheItemMatchOptions {

@@ -1,7 +1,7 @@
 self.isDebug = true;
 importScripts('module.sw.js');
 
-const env = new SwEnv('/', {
+const opt = {
   database: {
     name: 'db_local',
     version: 1,
@@ -13,67 +13,85 @@ const env = new SwEnv('/', {
     controlExtentions: ['js', 'css', 'woff2', 'ttf', 'otf', 'eot', 'ico'],
     items: [
       {
-        title: "root",
+        title: 'root',
         version: {
-          fetchPath: "/.version"
+          fetchPath: '/.version'
         },
         match: {
           order: 100, // все подконтрольные файлы, что не попадают в свои кеши(фильтр по pathStart), попадают в кеш 'root'
-          pathStart: "/",
+          pathStart: '/',
           useInCacheControl: false
         }
       },
       {
-        title: "static",
+        title: 'static',
         version: {
-          fetchPath: "/cdn/static/.version"
+          fetchPath: '/cdn/static/.version'
           // value: 'v1'
         },
         match: {
           order: 10,
-          pathStart: "/cdn/static",
+          pathStart: '/cdn/static',
           useInCacheControl: true
-        }
+        },
+        precachePaths: [
+          '/cdn/static/js/custom-elements.js',
+          '/cdn/static/js/luxon.js',
+          '/cdn/static/js/resize-observer.js',
+          '/cdn/static/fonts/bureausans/light/Bureausans-Light.woff2',
+          '/cdn/static/fonts/bureausans/regular/Bureausans-Regular.woff2',
+          '/cdn/static/fonts/bureausans/bold/Bureausans-Bold.woff2',
+          '/cdn/static/fonts/bureausans/italic/Bureausans-Italic.woff2',
+          '/cdn/static/fonts/bureausans/meteo/Bureausans-Meteo-Light-new.woff2',
+          '/cdn/static/fonts/PWF/PuansonWind.woff2',
+        ]
       },
       {
-        title: "worker",
+        title: 'worker',
         version: {
-          fetchPath: "/cdn/worker/.version"
+          fetchPath: '/cdn/worker/.version'
           // value: 'v1'
         },
         match: {
           order: 10,
-          pathStart: "/cdn/worker",
+          pathStart: '/cdn/worker',
           useInCacheControl: true
-        }
+        },
+        precachePaths: [
+          '/cdn/worker/dist/worker.js',
+        ]
       },
       {
-        title: "api",
+        title: 'api',
         version: {
-          fetchPath: "/cdn/api/.version"
+          fetchPath: '/cdn/api/.version'
           // value: 'v1'
         },
         match: {
           order: 10,
-          pathStart: "/cdn/api",
+          pathStart: '/cdn/api',
           useInCacheControl: true
-        }
+        },
+        precachePaths: [
+          '/cdn/api/dist/index.js',
+        ]
       },
       {
-        title: "tiles",
+        title: 'tiles',
         version: {
-          fetchPath: "/tiles/version"
+          fetchPath: '/tiles/version'
           // value: 'v1'
         },
         match: {
           order: 10,
-          pathStart: "/tiles",
+          pathStart: '/tiles',
           useInCacheControl: true
         }
       }
     ],
   }
-});
+};
+const env = new SwEnv('/', opt);
 self.env = env;
 env.init();
 
@@ -90,17 +108,9 @@ self.addEventListener('install', event => {
         paths: [
           '/index.html',
           '/manifest.json',
-          '/cdn/static/js/custom-elements.js',
-          '/cdn/static/js/luxon.js',
-          '/cdn/static/js/resize-observer.js',
-          '/cdn/api/dist/index.js',
-          '/cdn/worker/dist/worker.js',
-          '/cdn/static/fonts/bureausans/light/Bureausans-Light.woff2',
-          '/cdn/static/fonts/bureausans/regular/Bureausans-Regular.woff2',
-          '/cdn/static/fonts/bureausans/bold/Bureausans-Bold.woff2',
-          '/cdn/static/fonts/bureausans/italic/Bureausans-Italic.woff2',
-          '/cdn/static/fonts/bureausans/meteo/Bureausans-Meteo-Light-new.woff2',
-          '/cdn/static/fonts/PWF/PuansonWind.woff2',
+          ...opt.cache.items
+            .flatMap(item => item.precachePaths || [])
+            .sort((a, b) => a.localeCompare(b))
         ]
       }))
       .then(() => self.log('installed'))

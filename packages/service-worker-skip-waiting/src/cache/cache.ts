@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheCleaner, ICacheContainer, ICacheOptions, IFetchData, IPrecache, noStoreRequestInit, TCacheCleanStrategy, TGetStrategy} from '../сontract';
+import {ICacheCleaner, ICacheContainer, ICacheOptions, IFetchData, IPrecache, TCacheCleanStrategy, TGetStrategy} from '../сontract';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
 import {Resource} from '../resource/resource';
@@ -58,18 +58,8 @@ export class Cache {
   }
 
   get(strategy: TGetStrategy, data: IFetchData): Promise<Response | undefined> {
-    data.init = Cache.requestInit(data.init);
     const item = this.item(data.url);
-    switch (strategy) {
-      case 'cache || fetch -> cache':
-        return item.getByStrategy1(data);
-      case 'fetch -> cache || cache':
-        return item.getByStrategy2(data);
-      case 'fetch -> cache':
-        return item.getByStrategy3(data);
-      default:
-        throw new Error(`sw unknown strategy '${strategy}' of Cache.getFromCacheItem(…)`);
-    }
+    return item.getByStrategy(strategy, data);
   }
 
   async precache(data: IPrecache): Promise<void> {
@@ -110,12 +100,6 @@ export class Cache {
 
   info(): Promise<any> {
     return this.container.info();
-  }
-
-  static requestInit(init?: RequestInit): RequestInit {
-    return init === undefined
-      ? noStoreRequestInit
-      : {...init, ...noStoreRequestInit};
   }
 
 }
