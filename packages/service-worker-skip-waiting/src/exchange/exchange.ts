@@ -27,6 +27,9 @@ export class Exchange {
           caches: await self.env.cache.info()
         }, source);
         break;
+      case 'UPDATE_CACHES':
+        self.env.updateCaches();
+        break;
       default:
         throw new Error(`sw unknown message type '${data.type}' of Exchange.process(…)`);
     }

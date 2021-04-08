@@ -77,7 +77,7 @@
     document.addEventListener('resume', event => checkForUpdateSw());
 
     setTimeout(() => {
-      sendToServiceWorker('GET_INFO')
+      sendToServiceWorker('GET_INFO');
     }, 5_000);
   }
 </script>

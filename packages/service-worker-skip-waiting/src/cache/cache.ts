@@ -1,8 +1,8 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheCleaner, ICacheContainer, ICacheOptions, IFetchData, IPrecache, noStoreRequestInit, TCacheCleanStrategy, TGetStrategy} from '../сontract';
-import {Resource} from '../resource/resource';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
+import {Resource} from '../resource/resource';
 import {CacheCleaner} from './cache.cleaner';
 import {CacheItem} from './item/cache.item';
 
@@ -112,7 +112,7 @@ export class Cache {
     return this.container.info();
   }
 
-  static requestInit(init: RequestInit): RequestInit {
+  static requestInit(init?: RequestInit): RequestInit {
     return init === undefined
       ? noStoreRequestInit
       : {...init, ...noStoreRequestInit};

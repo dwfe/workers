@@ -1,9 +1,9 @@
 declare const self: IServiceWorkerGlobalScope;
+import {ICacheOptions, IDatabaseOptions, ISwEnvOptions} from './сontract';
 import {IServiceWorkerGlobalScope} from '../types';
 import {Database} from './database/database';
 import {Exchange} from './exchange/exchange';
 import {Resource} from './resource/resource';
-import {ISwEnvOptions} from './сontract';
 import {Cache} from './cache/cache';
 
 export class SwEnv {
@@ -16,8 +16,8 @@ export class SwEnv {
               public options: ISwEnvOptions) {
     if (!scope)
       throw new Error(`sw scope can't be empty`);
-    this.database = new Database(options.database);
-    this.cache = new Cache(options.cache);
+    this.database = new Database(options.database as IDatabaseOptions);
+    this.cache = new Cache(options.cache as ICacheOptions);
     this.exchange = new Exchange();
     this.resource = new Resource();
   }
@@ -49,14 +49,18 @@ export class SwEnv {
     });
   }
 
+  get(req: Request): Promise<Response | undefined> {
+    return this.resource.forBrowser(req);
+  }
+
   async updateCacheVersions(): Promise<void> {
     const store = this.database.getCacheVersionStore();
     if (store && await store.update() > 0)
       await this.cache.init();
   }
 
-  get(req: Request): Promise<Response | undefined> {
-    return this.resource.forBrowser(req);
+  async updateCaches(): Promise<void> {
+
   }
 
 }

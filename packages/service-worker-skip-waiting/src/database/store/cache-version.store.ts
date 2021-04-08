@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {noStoreRequestInit, ICacheItemOptions, ICacheOptions, IDatabaseStore} from '../../сontract';
+import {ICacheItemOptions, ICacheOptions, IDatabaseStore, noStoreRequestInit} from '../../сontract';
 import {DatabaseController} from '../database.controller';
 import {IServiceWorkerGlobalScope} from '../../../types';
 import {Resource} from '../../resource/resource';
@@ -9,7 +9,7 @@ export class CacheVersionStore implements IDatabaseStore<string> {
 
   constructor(public name: string,
               private dbController: DatabaseController) {
-    this.cacheOptions = self.env.options.cache;
+    this.cacheOptions = self.env.options.cache as ICacheOptions;
     if (!this.cacheOptions)
       throw new Error(`sw db store '${name}' can't find cache options`);
   }
@@ -81,7 +81,7 @@ export class CacheVersionStore implements IDatabaseStore<string> {
   }
 
   async getVersionFromServer(option: ICacheItemOptions): Promise<string> {
-    const path = option.version.fetchPath;
+    const path = option.version.fetchPath as string;
     this.log(`fetch '${option.title}' version from '${path}'`);
     try {
       const data = Resource.fetchData(path, 10_000, noStoreRequestInit);
