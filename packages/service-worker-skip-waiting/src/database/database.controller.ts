@@ -1,18 +1,17 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheOptions, IDatabaseStore, IDatabaseStoreNames, ISwEnvOptions} from '../сontract';
 import {CacheVersionStore} from './store/cache-version.store';
 import {IServiceWorkerGlobalScope} from '../../types';
+import {IDatabaseStore} from '../сontract';
 import {Database} from './database';
 
 export class DatabaseController {
   private stores: Map<string, IDatabaseStore>;
 
   constructor(private database: Database,
-              private db: IDBDatabase,
-              private options: ISwEnvOptions) {
-    const storeNames = options.database?.storeNames as IDatabaseStoreNames;
+              private db: IDBDatabase) {
+    const storeNames = self.env.options.database?.storeNames;
     this.stores = new Map([
-      [storeNames.cacheVersion, new CacheVersionStore(storeNames.cacheVersion, options.cache as ICacheOptions, this)],
+      [storeNames.cacheVersion, new CacheVersionStore(storeNames.cacheVersion, this)],
     ]);
   }
 

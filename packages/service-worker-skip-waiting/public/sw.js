@@ -1,7 +1,7 @@
 self.isDebug = true;
 importScripts('module.sw.js');
 
-const sw = new SwEnv('/', {
+const env = new SwEnv('/', {
   database: {
     name: 'db_local',
     version: 1,
@@ -10,55 +10,97 @@ const sw = new SwEnv('/', {
     }
   },
   cache: {
-    controlExtentions: ['js', 'css', 'woff2', 'ttf', 'otf', 'eot'],
+    controlExtentions: ['js', 'css', 'woff2', 'ttf', 'otf', 'eot', 'ico'],
     items: [
       {
-        title: 'app',
+        title: "root",
         version: {
-          fetchPath: '/version/app'
-          // value: 'v1'
+          fetchPath: "/.version"
         },
         match: {
-          order: 10,
-          pathStart: '/',
+          order: 100, // все подконтрольные файлы, что не попадают в свои кеши(фильтр по pathStart), попадают в кеш 'root'
+          pathStart: "/",
           useInCacheControl: false
         }
       },
       {
-        title: 'tiles',
+        title: "static",
         version: {
-          fetchPath: '/version/tiles'
+          fetchPath: "/cdn/static/.version"
           // value: 'v1'
         },
         match: {
-          order: 1,
-          pathStart: '/tiles',
+          order: 10,
+          pathStart: "/cdn/static",
+          useInCacheControl: true
+        }
+      },
+      {
+        title: "worker",
+        version: {
+          fetchPath: "/cdn/worker/.version"
+          // value: 'v1'
+        },
+        match: {
+          order: 10,
+          pathStart: "/cdn/worker",
+          useInCacheControl: true
+        }
+      },
+      {
+        title: "api",
+        version: {
+          fetchPath: "/cdn/api/.version"
+          // value: 'v1'
+        },
+        match: {
+          order: 10,
+          pathStart: "/cdn/api",
+          useInCacheControl: true
+        }
+      },
+      {
+        title: "tiles",
+        version: {
+          fetchPath: "/tiles/version"
+          // value: 'v1'
+        },
+        match: {
+          order: 10,
+          pathStart: "/tiles",
           useInCacheControl: true
         }
       }
     ],
   }
 });
-sw.init();
+self.env = env;
+env.init();
 
 self.addEventListener('install', event => {
   self.skipWaiting(); // выполнить принудительную активацию новой версии sw - без информирования пользователя и без ожидания его реакции на это событие
   event.waitUntil(
-    sw.waitForReady() // ожидание инициализации ТЕКУЩЕЙ(ранее установленной) версии sw, либо первичной инициализации sw (перед первой установкой)
+    env.waitForReady() // ожидание инициализации ТЕКУЩЕЙ(ранее установленной) версии sw, либо первичной инициализации sw (перед первой установкой)
       .then(() => self.log('installing…')) // начинается установка НОВОЙ версии sw
-      .then(() => sw.updateCacheVersions())
-      .then(() => sw.cache.precache({
-        strategy: 'cache || fetch -> cache',
-        throwError: false,
-        connectionTimeout: 10_000,
+      .then(() => env.updateCacheVersions())
+      .then(() => env.cache.precache({
+        strategy: 'fetch -> cache',
+        throwError: true,
+        timeout: 10_000,
         paths: [
-          '/worker.js',
-          '/fonts/BureausansLight.woff2',
-          '/fonts/Bureausans-Regular.woff2',
-          '/fonts/Bureausans-Bold.woff2',
-          '/fonts/Bureausans-Italic.woff2',
-          '/fonts/meteo/Bureausans_Meteo-Light.woff2',
-          '/fonts/PWF/PuansonWind.woff2'
+          '/index.html',
+          '/manifest.json',
+          '/cdn/static/js/custom-elements.js',
+          '/cdn/static/js/luxon.js',
+          '/cdn/static/js/resize-observer.js',
+          '/cdn/api/dist/index.js',
+          '/cdn/worker/dist/worker.js',
+          '/cdn/static/fonts/bureausans/light/Bureausans-Light.woff2',
+          '/cdn/static/fonts/bureausans/regular/Bureausans-Regular.woff2',
+          '/cdn/static/fonts/bureausans/bold/Bureausans-Bold.woff2',
+          '/cdn/static/fonts/bureausans/italic/Bureausans-Italic.woff2',
+          '/cdn/static/fonts/bureausans/meteo/Bureausans-Meteo-Light-new.woff2',
+          '/cdn/static/fonts/PWF/PuansonWind.woff2',
         ]
       }))
       .then(() => self.log('installed'))
@@ -69,26 +111,20 @@ self.addEventListener('activate', event => {
   self.log('activating…');
   event.waitUntil(
     self.clients.claim() // переключить всех потенциальных клиентов на новый sw
-      .then(() => sw.cache.clean('delete-uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
+      .then(() => env.cache.clean('delete-uncontrolled')) // клиенты уже смотрят на новый sw, значит можно почистить кеш
       .finally(() => {
-        sw.exchange.send('RELOAD_PAGE'); // важно для кеширующего sw, т.к. рефреш страницы гарантирует, что новая версия приложения запустилась на клиентах
-        self.log('activated')
+        env.exchange.send('RELOAD_PAGE'); // важно для кеширующего sw, т.к. рефреш страницы гарантирует, что новая версия приложения запустилась на клиентах
+        self.log('activated');
       })
   );
 });
 
-self.addEventListener('fetch', event => {
-  if (sw.isReady) {
-    const req = event.request;
-    const url = new URL(req.url);
-    if (req.method === 'GET' && sw.cache.isControl(url)) {
-      event.respondWith(sw.cache.get('cache || fetch -> cache', {req}));
-    }
-  }
+self.addEventListener('fetch', async event => {
+  if (env.isReady)
+    event.respondWith(env.get(event.request));
 });
 
 self.addEventListener('message', event => {
-  if (sw.isReady) {
-    sw.exchange.process(event);
-  }
+  if (env.isReady)
+    env.exchange.process(event);
 });

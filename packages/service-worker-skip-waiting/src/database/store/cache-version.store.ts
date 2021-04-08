@@ -1,27 +1,28 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheItemOptions, ICacheOptions, IDatabaseStore} from '../../сontract';
+import {noStoreRequestInit, ICacheItemOptions, ICacheOptions, IDatabaseStore} from '../../сontract';
 import {DatabaseController} from '../database.controller';
 import {IServiceWorkerGlobalScope} from '../../../types';
+import {Resource} from '../../resource/resource';
 
-export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue> {
-  static TIMEOUT = 20_000;
+export class CacheVersionStore implements IDatabaseStore<string> {
+  private cacheOptions: ICacheOptions;
 
   constructor(public name: string,
-              private options: ICacheOptions,
               private dbController: DatabaseController) {
-    if (!options)
+    this.cacheOptions = self.env.options.cache;
+    if (!this.cacheOptions)
       throw new Error(`sw db store '${name}' can't find cache options`);
   }
 
-  async get(title: string): Promise<TValue | undefined> {
+  async get(title: string): Promise<string | undefined> {
     return this.action('get', title);
   }
 
-  async put(value: TValue, title: string): Promise<IDBValidKey> {
+  async put(value: string, title: string): Promise<IDBValidKey> {
     return this.action('put', title, value);
   }
 
-  private action(action: 'get' | 'put', title: string, version?: TValue) {
+  private action(action: 'get' | 'put', title: string, version?: string) {
     if (!title)
       throw new Error(`sw invalid title '${title}'`);
 
@@ -40,7 +41,7 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
    * версии которых планируется запрашивать с сервера
    */
   controlledItems(): ICacheItemOptions[] {
-    return this.options.items.filter(item => item.version.fetchPath);
+    return this.cacheOptions.items.filter(item => item.version.fetchPath);
   }
 
   async update(): Promise<number> {
@@ -51,7 +52,7 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
       const item = items[i];
       const {title} = item;
       const version = await this.get(title);
-      const serverVersion = await self.timeout(CacheVersionStore.TIMEOUT, this.getVersionFromServer(item));
+      const serverVersion = await this.getVersionFromServer(item);
       if (version !== serverVersion) {
         await this.put(serverVersion, title);
         count++;
@@ -70,7 +71,7 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
       const {title} = item;
       const version = await this.get(title);
       if (version === undefined) {
-        const serverVersion = await self.timeout(CacheVersionStore.TIMEOUT, this.getVersionFromServer(item));
+        const serverVersion = await this.getVersionFromServer(item);
         await this.put(serverVersion, title);
         count++;
       }
@@ -80,16 +81,17 @@ export class CacheVersionStore<TValue = string> implements IDatabaseStore<TValue
   }
 
   async getVersionFromServer(option: ICacheItemOptions): Promise<string> {
-    const path = option.version.fetchPath as string;
-    this.log(`get '${option.title}' version from '${path}'`);
-    const version = 'v1';
-    // const version = await self.timeout(CacheVersionStore.TIMEOUT, fetch(path)).then(resp => {
-    //   if (resp.ok)
-    //     return resp.text();
-    //   this.logError(`fetch version, status: ${resp.status}, content-type: '${resp.headers.get('content-type')}'`)
-    // });
-    if (version) return version;
-    throw new Error(`sw cache '${option.title}'. Invalid version '${version}' fetched from '${path}'`);
+    const path = option.version.fetchPath;
+    this.log(`fetch '${option.title}' version from '${path}'`);
+    try {
+      const data = Resource.fetchData(path, 10_000, noStoreRequestInit);
+      const resp = await self.env.resource.fetchStrict(data);
+      const version = await resp.text();
+      return version.trim();
+    } catch (err) {
+      this.logError(`for '${option.title}': ${err.message}`);
+    }
+    return 'unknown';
   }
 
 

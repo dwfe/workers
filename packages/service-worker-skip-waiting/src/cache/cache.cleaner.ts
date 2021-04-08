@@ -44,7 +44,7 @@ export class CacheCleaner implements ICacheCleaner {
         self.logError(`can't delete cache '${cacheName}', ${attemptsCount} attempts were made`)
       )
     );
-    self.log('cache cleaning completed');
+    self.log('cache cleaning complete');
   }
 
   async tryToDelete(strategy: TCacheCleanStrategy, attemptsCount: number): Promise<string[]> {

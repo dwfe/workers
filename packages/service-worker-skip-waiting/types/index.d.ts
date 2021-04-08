@@ -5,6 +5,7 @@ interface IServiceWorkerGlobalScope extends ServiceWorkerGlobalScope {
 
   isDebug: boolean;
   SwEnv: Type<SwEnv>;
+  env: SwEnv;
 
   log: (...args) => void;
   logWarn: (...args) => void;

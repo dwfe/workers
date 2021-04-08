@@ -69,25 +69,12 @@ export interface ICacheItemOptions {
 }
 
 export interface ICacheItemMatchOptions {
-  order: number;     // Когда контейнер кешей решает задачу "какой же CacheItem отдать - item(url: URL): CacheItem?" item'ы проверяются в порядке возрастания order,
+  order: number;     // Когда контейнер кешей решает задачу "какой же CacheItem отдать - item(url: URL): CacheItem?" - то item'ы проверяются в порядке возрастания order,
   pathStart: string; // а проверка заключается в том, что url.pathname должен начинаться с pathStart
   useInCacheControl: boolean; // Когда кеш проверяет "isControl(url: URL)", тогда в проверке может поучавствовать CacheItem, выполняя match на свой pathStart. Item'ы проверяются в порядке возрастания order
 }
 
-export type TGetFromCacheStrategy = 'cache || fetch -> cache';
 export type TCacheCleanStrategy = 'delete-uncontrolled';
-
-export const swCacheFetchInit: RequestInit = {
-
-  /**
-   * Если ожидается, что sw закеширует ответ сервера, тогда:
-   *   - запрос должен идти мимо браузерного кеша;
-   *   - ответ не должен сохраняться в браузерный кеш.
-   * https://developer.mozilla.org/en-US/docs/Web/API/Request/cache
-   */
-  cache: 'no-store'
-
-};
 
 export interface ICacheContainer {
 
@@ -123,27 +110,6 @@ export interface ICacheName {
 
 }
 
-/**
- * Запросить из кеша можно двумя путями:
- *  1) req - передать Request, который был перехвачен в sw.onfetch
- *  2) path - передать строку запроса в пределах origin sw, например: "/worker.js", "/fonts/times.woff2"
- */
-export interface IGetFromCache {
-  req?: Request;
-  path?: string;
-  connectionTimeout?: number; // задать время жизни fetch. По умолчанию же зависит от браузера: от минуты и выше
-}
-
-/**
- * Аргументы, которые могут понадобиться при запросе у CacheItem
- */
-export interface IGetFromCacheItem {
-  req: RequestInfo;      // передается в fetch(req)
-  cacheKey: RequestInfo; // ключ в кеше
-  connectionTimeout?: number;
-  url: URL;              // url запроса
-  logPart: string;       // используется для логирования
-}
 
 /**
  * Прекеш происходит в момент sw.oninstall.
@@ -158,13 +124,13 @@ export interface IGetFromCacheItem {
  *  1) Если есть возможность, то использовать throwError = false, при этом:
  *       - загрузятся только файлы, на которых не возникло ошибки;
  *       - не прервется процесс 'install'.
- *  2) Рассмотреть возможность задания connectionTimeout в несколько секунд, например, 10 сек. на каждый path.
+ *  2) Рассмотреть возможность задания timeout в несколько секунд, например, 10 сек. на каждый path.
  */
 export interface IPrecache {
-  strategy: TGetFromCacheStrategy;
-  paths: string[]; // список путей в пределах origin sw, например: "/worker.js", "/fonts/times.woff2"
+  strategy: TGetStrategy;
+  paths: string[]; // список путей в пределах origin sw, например: "/worker.js", "fonts/times.woff2"
+  timeout?: number; // для каждого path
   throwError?: boolean; // надо ли делать throw Error при ошибке, либо просто залогировать ее
-  connectionTimeout?: number; // для каждого path
 }
 
 //endregion
@@ -172,7 +138,13 @@ export interface IPrecache {
 
 //region Exchange
 
-export type MessageType = 'GET_INFO' | 'INFO' | 'RELOAD_PAGE';
+export type MessageType =
+  'GET_INFO' |      // запрос информации о сервис воркера
+  'INFO' |          // ответ информацией о сервис воркере
+  'RELOAD_PAGE' |   // сигнал: клиент, тебе надо рефрешнуть страницу
+  'OFFLINE_START' | // сигнал: сейчас offline
+  'OFFLINE_END'     // сигнал: offline закончился, сейчас online
+  ;
 
 export interface IMessageEvent extends ExtendableMessageEvent {
   data: {
@@ -180,6 +152,50 @@ export interface IMessageEvent extends ExtendableMessageEvent {
     data?: any;
   };
 }
+
+//endregion
+
+
+//region Resource
+
+export interface IFetchData {
+  req: RequestInfo;   // запрос fetch
+  url: URL;           // URL запроса
+  timeout?: number;   // время жизни fetch. По умолчанию зависит от браузера: от минуты и выше
+  init?: RequestInit; // init параметры fetch
+}
+
+export type TGetStrategy =
+// запросы идут через кеш
+  'cache || fetch -> cache' | // #1
+  'fetch -> cache || cache' | // #2 подразумевается прекеш
+  'fetch -> cache' |          // #3
+  // запросы идут напрямую к серверу
+  'fetch';                    // #4
+
+export const noStoreRequestInit: RequestInit = {
+
+  /**
+   * Если ожидается, что sw закеширует ответ сервера, тогда:
+   *   - запрос должен идти мимо браузерного кеша;
+   *   - ответ не должен сохраняться в браузерный кеш.
+   * https://developer.mozilla.org/en-US/docs/Web/API/Request/cache
+   */
+  cache: 'no-store',
+
+};
+
+export interface BrowserFetchData {
+  strategy: TGetStrategy;
+  data: IFetchData;
+}
+
+export type TOffline =
+  'byData' |     // offline по результатам запроса данных с сервера
+  'byNavigate' | // offline при попытке навигации
+  null;          // сейчас online
+
+export type TOfflineNavigateReason = '5xx' | 'catchError';
 
 //endregion
 

@@ -1,16 +1,12 @@
 declare const self: IServiceWorkerGlobalScope;
 import {IMessageEvent, MessageType} from '../сontract';
 import {IServiceWorkerGlobalScope} from '../../types';
-import {SwEnv} from '../sw.env';
 
 /**
  * Отвечает за обработку/обмен сообщениями
  * между сервис воркером и его клиентами
  */
 export class Exchange {
-
-  constructor(private sw: SwEnv) {
-  }
 
   async send(type: MessageType, data?, source?: ExtendableMessageEvent['source']) {
     if (source) source.postMessage({type, data}, []); // отправить конкретному получателю
@@ -28,7 +24,7 @@ export class Exchange {
     switch (data.type) {
       case 'GET_INFO':
         this.send('INFO', {
-          caches: await this.sw.cache?.info()
+          caches: await self.env.cache.info()
         }, source);
         break;
       default:

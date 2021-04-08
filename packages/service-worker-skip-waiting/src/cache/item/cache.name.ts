@@ -1,6 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheName} from '../../сontract';
 import {IServiceWorkerGlobalScope} from '../../../types';
+import {ICacheName} from '../../сontract';
 
 /**
  * Реализуется формат имени кеша следующего вида:
@@ -25,23 +25,22 @@ export class CacheName implements ICacheName {
 
   value: string;
 
-  constructor(public scope: string,
-              public title: string,
+  constructor(public title: string,
               public version: string) {
-    this.value = CacheName.get(scope, title, version);
+    this.value = CacheName.get(title, version);
   }
 
   info() {
     return {
-      scope: this.scope,
+      scope: self.env.scope,
       title: this.title,
       version: this.version
     };
   }
 
-  static get(scope: string, title: string, version: string): string {
+  static get(title: string, version: string): string {
     const d = CacheName.DELIMITER;
-    return `${scope}${d}${title}${d}${version}`;
+    return `${self.env.scope}${d}${title}${d}${version}`;
   }
 
   static isValid(cacheName: string): boolean {

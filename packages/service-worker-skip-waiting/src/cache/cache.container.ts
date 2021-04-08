@@ -1,5 +1,6 @@
-import {CacheVersionStore} from '../database/store/cache-version.store';
+declare const self: IServiceWorkerGlobalScope;
 import {ICacheContainer, ICacheItemOptions} from '../сontract';
+import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheName} from './item/cache.name';
 import {CacheItem} from './item/cache.item';
 
@@ -7,9 +8,7 @@ export class CacheContainer implements ICacheContainer {
 
   private container: Map<string, CacheItem> = new Map();
 
-  constructor(private itemsOpt: ICacheItemOptions[],
-              private scope: string,
-              private versionStore: CacheVersionStore) {
+  constructor(private itemsOpt: ICacheItemOptions[]) {
     if (!itemsOpt?.length)
       throw new Error(`sw missing description of cache items`);
   }
@@ -26,11 +25,11 @@ export class CacheContainer implements ICacheContainer {
        */
       let version = dto.version.value;
       if (!version) {
-        version = await this.versionStore.get(title);
+        version = await self.env.database.getCacheVersionStore().get(title);
         if (!version)
           throw new Error(`sw cache container can't get version for '${title}'`);
       }
-      const cacheName = new CacheName(this.scope, title, version);
+      const cacheName = new CacheName(title, version);
       const item = new CacheItem(cacheName, {match});
       this.container.set(cacheName.value, item);
     }
@@ -46,7 +45,7 @@ export class CacheContainer implements ICacheContainer {
     const found = this.items().find(item => item.match(url));
     if (found)
       return found;
-    return this.items[this.items.length - 1];
+    return this.items[this.items.length - 1]; // куда-то же надо складывать, если не найден конкретный кеш
   }
 
   isControl(url: URL): boolean {

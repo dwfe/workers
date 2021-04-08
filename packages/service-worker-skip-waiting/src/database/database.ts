@@ -1,17 +1,15 @@
 declare const self: IServiceWorkerGlobalScope;
+import {IDatabaseOptions, IDatabaseStoreNames} from '../сontract';
 import {CacheVersionStore} from './store/cache-version.store';
 import {DatabaseController} from './database.controller';
 import {IServiceWorkerGlobalScope} from '../../types';
-import {IDatabaseOptions, IDatabaseStoreNames} from '../сontract';
-import {SwEnv} from '../sw.env';
 
 export class Database {
   private db!: IDBDatabase;
   private controller!: DatabaseController;
   public isReady = false;
 
-  constructor(private sw: SwEnv,
-              private options: IDatabaseOptions) {
+  constructor(private options: IDatabaseOptions) {
     if (!self.indexedDB)
       throw new Error(`This browser doesn't support IndexedDB`)
   }
@@ -29,7 +27,7 @@ export class Database {
      * Если пользователь удалил db, тогда она автоматически будет создана и запустится событие onupgradeneeded, в котором должна быть логика на создание требуемых хранилищ.
      */
     this.db = await this.open();
-    this.controller = new DatabaseController(this, this.db, this.sw.options);
+    this.controller = new DatabaseController(this, this.db);
 
     /**
      * Через панель DevTools пользователю также доступно удаление записей любого из хранилищ.
@@ -85,7 +83,7 @@ export class Database {
           //   // удалить/перезаполнить/...  хранилища именно в момент апгрейда на версию X
           //   break;
         }
-        console.log(`>>> upgrade completed >>>`);
+        console.log(`>>> upgrade complete >>>`);
       };
       open.onblocked = (event: Event) => {
         // https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onblocked

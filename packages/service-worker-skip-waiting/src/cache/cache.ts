@@ -1,19 +1,17 @@
-import {ICacheCleaner, ICacheContainer, ICacheOptions, IGetFromCache, IGetFromCacheItem, IPrecache, TCacheCleanStrategy, TGetFromCacheStrategy} from '../сontract';
+declare const self: IServiceWorkerGlobalScope;
+import {ICacheCleaner, ICacheContainer, ICacheOptions, IFetchData, IPrecache, noStoreRequestInit, TCacheCleanStrategy, TGetStrategy} from '../сontract';
+import {Resource} from '../resource/resource';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
 import {CacheCleaner} from './cache.cleaner';
 import {CacheItem} from './item/cache.item';
-import {SwEnv} from '../sw.env';
-
-declare const self: ServiceWorkerGlobalScope & IServiceWorkerGlobalScope;
 
 export class Cache {
   private container!: ICacheContainer;
   private cleaner!: ICacheCleaner;
   public isReady = false;
 
-  constructor(private sw: SwEnv,
-              private options: ICacheOptions) {
+  constructor(private options: ICacheOptions) {
     if (!self.caches)
       throw new Error(`This browser doesn't support Cache API`)
   }
@@ -26,7 +24,7 @@ export class Cache {
     }
     this.isReady = false;
 
-    this.container = new CacheContainer(this.options.items, this.sw.scope, this.sw.database.getCacheVersionStore());
+    this.container = new CacheContainer(this.options.items);
     await this.container.init();
     this.cleaner = new CacheCleaner(this);
 
@@ -34,19 +32,24 @@ export class Cache {
     self.log(` - cache is running: ${this.items().map(item => item.cacheName.value).join(', ')}`);
   }
 
-  private get controlExtentions(): string[] {
+  get controlExtentions(): string[] {
     return this.options.controlExtentions || [];
   }
 
   isControl(url: URL): boolean {
-    if (url.origin !== self.location.origin) return false;
-    const pathname = url.pathname;
+    if (url.origin !== self.location.origin) // Текущая политика:
+      return false;                          // не кешировать ответы с чужих ресурсов
 
-    if (pathname.includes('sw.js') || pathname.includes('index.html'))
+    const pathname = url.pathname;
+    if (pathname.includes('sw.js'))
       return false;
     else if (
-      pathname.startsWith('/static') ||
-      pathname.startsWith('/fonts') ||
+      pathname.includes('/static/') ||
+      pathname.startsWith('/index.html') ||
+      pathname.startsWith('/manifest.json') ||
+      /\/apple.*\.png/.test(pathname) ||
+      /\/favicon.*\.png/.test(pathname) ||
+      /\/mstile.*\.png/.test(pathname) ||
       this.container.isControl(url)
     )
       return true;
@@ -54,15 +57,16 @@ export class Cache {
     return ext ? this.controlExtentions.includes(ext) : false;
   }
 
-  get(strategy: TGetFromCacheStrategy, data: IGetFromCache): Promise<Response | undefined> {
-    return this.getFromCacheItem(strategy, CacheItem.convert(data));
-  }
-
-  getFromCacheItem(strategy: TGetFromCacheStrategy, data: IGetFromCacheItem): Promise<Response | undefined> {
+  get(strategy: TGetStrategy, data: IFetchData): Promise<Response | undefined> {
+    data.init = Cache.requestInit(data.init);
     const item = this.item(data.url);
     switch (strategy) {
       case 'cache || fetch -> cache':
-        return item.get(data);
+        return item.getByStrategy1(data);
+      case 'fetch -> cache || cache':
+        return item.getByStrategy2(data);
+      case 'fetch -> cache':
+        return item.getByStrategy3(data);
       default:
         throw new Error(`sw unknown strategy '${strategy}' of Cache.getFromCacheItem(…)`);
     }
@@ -70,16 +74,10 @@ export class Cache {
 
   async precache(data: IPrecache): Promise<void> {
     if (!data.paths.length) return;
-    const {strategy, paths, throwError, connectionTimeout} = data;
+    const {strategy, paths, throwError, timeout} = data;
     self.log(`pre-cache [${paths.length}] files by strategy '${strategy}'`);
 
-    const queue = paths
-      .map(path => CacheItem.convert({path, connectionTimeout}))
-      .filter(data => {
-        if (this.isControl(data.url)) return true;
-        self.logError(`there's no point in pre-cache an uncontrolled resource '${data.url}'`);
-        return false;
-      });
+    const queue = paths.map(path => Resource.fetchData(path, timeout));
 
     /**
      * Для прекеша главное не скорость скачивания, а надежность.
@@ -88,14 +86,14 @@ export class Cache {
     for (let i = 0; i < queue.length; i++) {
       const data = queue[i];
       try {
-        await this.getFromCacheItem(strategy, data);
+        await this.get(strategy, data);
       } catch (err) {
-        const errMassage = `can't pre-cache '${data.logPart}', ${err.message}`;
+        const errMassage = `can't pre-cache '${Resource.path(data.url)}', ${err.message}`;
         if (throwError) throw new Error('sw ' + errMassage);
         self.logError(errMassage);
       }
     }
-    self.log('pre-cache completed');
+    self.log('pre-cache complete');
   }
 
   clean(strategy: TCacheCleanStrategy): Promise<void> {
@@ -112,6 +110,12 @@ export class Cache {
 
   info(): Promise<any> {
     return this.container.info();
+  }
+
+  static requestInit(init: RequestInit): RequestInit {
+    return init === undefined
+      ? noStoreRequestInit
+      : {...init, ...noStoreRequestInit};
   }
 
 }
