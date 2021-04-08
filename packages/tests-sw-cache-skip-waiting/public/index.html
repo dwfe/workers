@@ -64,7 +64,7 @@
     document.addEventListener('resume', event => checkForUpdate());
 
     setTimeout(() => {
-      navigator.serviceWorker.controller?.postMessage({type: "GET_INFO"})
+      navigator.serviceWorker.controller?.postMessage({type: 'GET_INFO'})
     }, 5_000);
   }
 </script>

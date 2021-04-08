@@ -139,11 +139,12 @@ export interface IPrecache {
 //region Exchange
 
 export type MessageType =
-  'GET_INFO' |      // запрос информации о сервис воркера
-  'INFO' |          // ответ информацией о сервис воркере
-  'RELOAD_PAGE' |   // сигнал: клиент, тебе надо рефрешнуть страницу
-  'OFFLINE_START' | // сигнал: сейчас offline
-  'OFFLINE_END'     // сигнал: offline закончился, сейчас online
+  'GET_INFO' |      // сигнал sw: сообщи информацию о себе
+  'INFO' |          // данные клиентам: информация о сервис воркере
+  'RELOAD_PAGE' |   // сигнал клиентам: клиент, тебе надо рефрешнуть страницу
+  'OFFLINE_START' | // сигнал клиентам: сейчас offline
+  'OFFLINE_END' |   // сигнал клиентам: offline закончился, сейчас online
+  'UPDATE_CACHES'   // сигнал sw: проверь версии кешей, и если есть новые, тогда актуализируй эти кеши
   ;
 
 export interface IMessageEvent extends ExtendableMessageEvent {
@@ -160,7 +161,7 @@ export interface IMessageEvent extends ExtendableMessageEvent {
 
 export interface IFetchData {
   req: RequestInfo;   // запрос fetch
-  url: URL;           // URL запроса
+  url: URL;           // URL запроса - используется при всевозможных проверках
   timeout?: number;   // время жизни fetch. По умолчанию зависит от браузера: от минуты и выше
   init?: RequestInit; // init параметры fetch
 }
@@ -170,7 +171,7 @@ export type TGetStrategy =
   'cache || fetch -> cache' | // #1
   'fetch -> cache || cache' | // #2 подразумевается прекеш
   'fetch -> cache' |          // #3
-  // запросы идут напрямую к серверу
+// запросы идут напрямую к серверу
   'fetch';                    // #4
 
 export const noStoreRequestInit: RequestInit = {
