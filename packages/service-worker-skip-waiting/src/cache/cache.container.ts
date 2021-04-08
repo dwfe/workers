@@ -1,7 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheContainer, ICacheItemOptions} from '../сontract';
 import {IServiceWorkerGlobalScope} from '../../types';
-import {CacheName} from './item/cache.name';
 import {CacheItem} from './item/cache.item';
 
 export class CacheContainer implements ICacheContainer {
@@ -29,9 +28,8 @@ export class CacheContainer implements ICacheContainer {
         if (!version)
           throw new Error(`sw cache container can't get version for '${title}'`);
       }
-      const cacheName = new CacheName(title, version);
-      const item = new CacheItem(cacheName, {match});
-      this.container.set(cacheName.value, item);
+      const item = CacheItem.of(title, version, {match});
+      this.container.set(item.cacheName.value, item);
     }
   }
 

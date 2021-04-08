@@ -1,6 +1,7 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheOptions, IDatabaseOptions, ISwEnvOptions} from './сontract';
 import {IServiceWorkerGlobalScope} from '../types';
+import {CacheItem} from './cache/item/cache.item';
 import {Database} from './database/database';
 import {Exchange} from './exchange/exchange';
 import {Resource} from './resource/resource';
@@ -54,13 +55,22 @@ export class SwEnv {
   }
 
   async updateCacheVersions(): Promise<void> {
-    const store = this.database.getCacheVersionStore();
-    if (store && await store.update() > 0)
+    const cacheVersionStore = this.database.getCacheVersionStore();
+    const updatedVersions = await cacheVersionStore.updatePredefined();
+    if (updatedVersions > 0)
       await this.cache.init();
   }
 
   async updateCaches(): Promise<void> {
+    const cacheVersionStore = this.database.getCacheVersionStore();
+    const changed = await cacheVersionStore.searchForPredefinedChanged();
+    for (let i = 0; i < changed.length; i++) {
+      const {key: title, sourceValue: version} = changed[i];
+      const itemOpt = this.cache.options.items.find(item => item.title === title);
+      if (!itemOpt) continue;
+      const item = CacheItem.of(title as string, version, {match: itemOpt.match});
 
+    }
   }
 
 }

@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheItemOptions, ICacheOptions, IDatabaseStore, noStoreRequestInit} from '../../сontract';
+import {ICacheItemOptions, ICacheOptions, IChangedRecord, IDatabaseStore, noStoreRequestInit} from '../../сontract';
 import {DatabaseController} from '../database.controller';
 import {IServiceWorkerGlobalScope} from '../../../types';
 import {Resource} from '../../resource/resource';
@@ -44,8 +44,8 @@ export class CacheVersionStore implements IDatabaseStore<string> {
     return this.cacheOptions.items.filter(item => item.version.fetchPath);
   }
 
-  async update(): Promise<number> {
-    this.log(`updating records…`)
+  async updatePredefined(): Promise<number> {
+    this.log(`updating predefined records…`)
     let count = 0;
     const items = this.controlledItems();
     for (let i = 0; i < items.length; i++) {
@@ -58,12 +58,12 @@ export class CacheVersionStore implements IDatabaseStore<string> {
         count++;
       }
     }
-    this.log(`updated [${count}] records`)
+    this.log(`updated [${count}] predefined records`)
     return count;
   }
 
-  async restore(): Promise<number> {
-    this.log(`restoring records…`)
+  async restorePredefined(): Promise<number> {
+    this.log(`restoring predefined records…`)
     let count = 0;
     const items = this.controlledItems();
     for (let i = 0; i < items.length; i++) {
@@ -76,8 +76,28 @@ export class CacheVersionStore implements IDatabaseStore<string> {
         count++;
       }
     }
-    this.log(`restored [${count}] records`)
+    this.log(`restored [${count}] predefined records`)
     return count;
+  }
+
+  async searchForPredefinedChanged(): Promise<IChangedRecord<string>[]> {
+    this.log(`searching for predefined changed…`);
+    const result: IChangedRecord<string>[] = [];
+    const items = this.controlledItems();
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const {title} = item;
+      const version = await this.get(title);
+      const serverVersion = await this.getVersionFromServer(item);
+      if (version !== serverVersion)
+        result.push({
+          key: title,
+          value: version,
+          sourceValue: serverVersion,
+        });
+    }
+    this.log(`found [${result.length}] predefined changed`)
+    return result;
   }
 
   async getVersionFromServer(option: ICacheItemOptions): Promise<string> {

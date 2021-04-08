@@ -11,7 +11,7 @@ export class Cache {
   private cleaner!: ICacheCleaner;
   public isReady = false;
 
-  constructor(private options: ICacheOptions) {
+  constructor(public options: ICacheOptions) {
     if (!self.caches)
       throw new Error(`This browser doesn't support Cache API`)
   }

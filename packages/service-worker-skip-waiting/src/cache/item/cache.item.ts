@@ -1,7 +1,8 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheItemMatchOptions, ICacheName, IFetchData} from '../../сontract';
+import {CacheItemOptions, ICacheName, IFetchData} from '../../сontract';
 import {IServiceWorkerGlobalScope} from '../../../types';
 import {Resource} from '../../resource/resource';
+import {CacheName} from './cache.name';
 
 /**
  * Сущность, которая:
@@ -10,8 +11,13 @@ import {Resource} from '../../resource/resource';
  */
 export class CacheItem {
 
+  static of(title: string, version: string, options: CacheItemOptions): CacheItem {
+    const cacheName = new CacheName(title, version);
+    return new CacheItem(cacheName, options);
+  }
+
   constructor(public cacheName: ICacheName,
-              public options: { match: ICacheItemMatchOptions }) {
+              public options: CacheItemOptions) {
   }
 
   cache(): Promise<Cache> {
