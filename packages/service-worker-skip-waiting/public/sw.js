@@ -1,7 +1,7 @@
 self.isDebug = true;
 importScripts('module.sw.js');
 
-const opt = {
+const env = new SwEnv('/', {
   database: {
     name: 'db_local',
     version: 1,
@@ -90,8 +90,7 @@ const opt = {
       }
     ],
   }
-};
-const env = new SwEnv('/', opt);
+});
 self.env = env;
 env.init();
 
