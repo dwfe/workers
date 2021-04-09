@@ -83,17 +83,15 @@ export class SwEnv {
         const {key, sourceValue} = predefinedChanged[i];
         await this.cache.precacheExactItem('fetch -> cache', key as string, sourceValue);
       }
-      /**
-       * Теперь кеши с новыми значениями версий физически появились в браузере.
-       * Также в них по возможности запрекешились файлы.
-       */
       await this.updateCacheVersions();
-
       /**
-       * Начиная с этого момента браузер не использует кеши старых версий.
+       * Начиная с этого момента браузер навсегда забыл о старых кешах.
        */
-      await this.cache.clean('delete-uncontrolled'); // значит можно почистить кеш
-      self.log('updating caches complete');
+      try {
+        await this.cache.clean('delete-uncontrolled'); // значит можно почистить кеш
+        self.log('updating caches complete');
+      } catch (ignored) {
+      }
       this.exchange.send('RELOAD_PAGE'); // запустить новые версии кешей на клиентах
     } catch (err) {
       self.logError(`updating caches: ${err.message}`);
