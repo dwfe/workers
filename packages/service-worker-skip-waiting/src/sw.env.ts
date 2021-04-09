@@ -56,6 +56,10 @@ export class SwEnv {
 
 //region Cache actions
 
+  /**
+   * Необходимо заново проинициализировать весь кеш
+   * после обновления значений версий кешей в хранилище.
+   */
   async updateCacheVersions(): Promise<void> {
     const cacheVersionStore = this.database.getCacheVersionStore();
     const updatedVersions = await cacheVersionStore.updatePredefined();
@@ -63,23 +67,38 @@ export class SwEnv {
       await this.cache.init();
   }
 
+  private updateCachesLock = false;
+
   async updateCaches(): Promise<void> {
-    const cacheVersionStore = this.database.getCacheVersionStore();
-    const predefinedChanged = await cacheVersionStore.findPredefinedChanged();
-    if (predefinedChanged.length === 0)
+    if (this.updateCachesLock)
       return;
-    for (let i = 0; i < predefinedChanged.length; i++) {
-      const {key, sourceValue} = predefinedChanged[i];
-      await this.cache.precacheExactItem('fetch -> cache', key as string, sourceValue);
+    this.updateCachesLock = true;
+    try {
+      const cacheVersionStore = this.database.getCacheVersionStore();
+      const predefinedChanged = await cacheVersionStore.findPredefinedChanged();
+      if (predefinedChanged.length === 0)
+        return;
+      self.log('updating caches…');
+      for (let i = 0; i < predefinedChanged.length; i++) {
+        const {key, sourceValue} = predefinedChanged[i];
+        await this.cache.precacheExactItem('fetch -> cache', key as string, sourceValue);
+      }
+      /**
+       * Теперь кеши с новыми значениями версий физически появились в браузере.
+       * Также в них по возможности запрекешились файлы.
+       */
+      await this.updateCacheVersions();
+
+      /**
+       * Начиная с этого момента браузер не использует кеши старых версий.
+       */
+      await this.cache.clean('delete-uncontrolled'); // значит можно почистить кеш
+      self.log('updating caches complete');
+      this.exchange.send('RELOAD_PAGE'); // запустить новые версии кешей на клиентах
+    } catch (err) {
+      self.logError(`updating caches: ${err.message}`);
     }
-    /**
-     * После прекеша в кеши с новыми значениями версий(они физически уже появились в браузере):
-     *  1) надо выполнить непосредственное обновление значений версий кешей в хранилище;
-     *  2) заново проинициализировать весь кеш.
-     */
-    await this.updateCacheVersions();
-    await this.cache.clean('delete-uncontrolled'); // браузер теперь не использует кеши старых версий, значит можно почистить кеш
-    this.exchange.send('RELOAD_PAGE'); // запустить новые версии кешей на клиентах
+    this.updateCachesLock = false;
   }
 
 //endregion
