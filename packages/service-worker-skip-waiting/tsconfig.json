@@ -6,7 +6,8 @@
     "outDir": "./dist/esm",
     "baseUrl": ".",
     "lib": [
-      "WebWorker"
+      "WebWorker",
+      "ES2019.Array"
     ]
   },
   "exclude": [

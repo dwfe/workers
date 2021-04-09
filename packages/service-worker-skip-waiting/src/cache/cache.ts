@@ -1,5 +1,5 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheCleaner, ICacheContainer, ICacheOptions, IFetchData, IPrecache, TCacheCleanStrategy, TGetStrategy} from '../сontract';
+import {ICacheCleaner, ICacheContainer, ICacheItemOptions, ICacheOptions, IFetchData, IPrecache, TCacheCleanStrategy, TGetStrategy} from '../сontract';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
 import {Resource} from '../resource/resource';
@@ -62,6 +62,9 @@ export class Cache {
     return item.getByStrategy(strategy, data);
   }
 
+
+//region Pre-cache
+
   async precache(data: IPrecache): Promise<void> {
     if (!data.paths.length) return;
     const {strategy, paths, throwError, timeout} = data;
@@ -85,6 +88,33 @@ export class Cache {
     }
     self.log('pre-cache complete');
   }
+
+  async precacheExactItem(strategy: TGetStrategy, title: string, version: string): Promise<void> {
+    const options = this.options.items.find(item => item.title === title) as ICacheItemOptions;
+    const paths = options?.precachePaths;
+    if (!paths || paths.length === 0)
+      return;
+    const item = CacheItem.of(title, version, {match: options.match});
+    self.log(`pre-cache ${item.cacheName.value}, [${paths.length}] files by strategy '${strategy}'`);
+    for (const path of paths) {
+      try {
+        await item.getByStrategy(strategy, Resource.fetchData(path, 10_000));
+      } catch (err) {
+        const errMassage = `can't pre-cache '${path}', ${err.message}`;
+        self.logError(errMassage);
+      }
+    }
+    self.log('pre-cache complete');
+  }
+
+  getItemsPrecachePaths(): string[] {
+    return this.options.items
+      .flatMap(item => item.precachePaths || [])
+      .sort((a, b) => a.localeCompare(b));
+  }
+
+//endregion
+
 
   clean(strategy: TCacheCleanStrategy): Promise<void> {
     return this.cleaner.clean(strategy);

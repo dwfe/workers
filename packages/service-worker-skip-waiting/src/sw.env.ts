@@ -1,7 +1,6 @@
 declare const self: IServiceWorkerGlobalScope;
 import {ICacheOptions, IDatabaseOptions, ISwEnvOptions} from './сontract';
 import {IServiceWorkerGlobalScope} from '../types';
-import {CacheItem} from './cache/item/cache.item';
 import {Database} from './database/database';
 import {Exchange} from './exchange/exchange';
 import {Resource} from './resource/resource';
@@ -54,6 +53,9 @@ export class SwEnv {
     return this.resource.forBrowser(req);
   }
 
+
+//region Cache actions
+
   async updateCacheVersions(): Promise<void> {
     const cacheVersionStore = this.database.getCacheVersionStore();
     const updatedVersions = await cacheVersionStore.updatePredefined();
@@ -63,28 +65,23 @@ export class SwEnv {
 
   async updateCaches(): Promise<void> {
     const cacheVersionStore = this.database.getCacheVersionStore();
-    const changed = await cacheVersionStore.searchForPredefinedChanged();
-    if (changed.length === 0)
+    const predefinedChanged = await cacheVersionStore.findPredefinedChanged();
+    if (predefinedChanged.length === 0)
       return;
-    // сначала выполнить прекеш
-    for (let i = 0; i < changed.length; i++) {
-      const {key: title, sourceValue: version} = changed[i];
-      const itemOpt = this.cache.options.items.find(item => item.title === title);
-      if (itemOpt?.precachePaths) {
-        const item = CacheItem.of(title as string, version, {match: itemOpt.match});
-        for (const path of itemOpt.precachePaths) {
-          try {
-            await item.getByStrategy('fetch -> cache', Resource.fetchData(path));
-          } catch (err) {
-            const errMassage = `can't pre-cache '${path}', ${err.message}`;
-            self.logError(errMassage);
-          }
-        }
-      }
+    for (let i = 0; i < predefinedChanged.length; i++) {
+      const {key, sourceValue} = predefinedChanged[i];
+      await this.cache.precacheExactItem('fetch -> cache', key as string, sourceValue);
     }
+    /**
+     * После прекеша в кеши с новыми значениями версий(они физически уже появились в браузере):
+     *  1) надо выполнить непосредственное обновление значений версий кешей в хранилище;
+     *  2) заново проинициализировать весь кеш.
+     */
     await this.updateCacheVersions();
-    await this.cache.clean('delete-uncontrolled');
-    this.exchange.send('RELOAD_PAGE');
+    await this.cache.clean('delete-uncontrolled'); // браузер теперь не использует кеши старых версий, значит можно почистить кеш
+    this.exchange.send('RELOAD_PAGE'); // запустить новые версии кешей на клиентах
   }
+
+//endregion
 
 }

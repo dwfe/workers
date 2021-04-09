@@ -108,9 +108,7 @@ self.addEventListener('install', event => {
         paths: [
           '/index.html',
           '/manifest.json',
-          ...opt.cache.items
-            .flatMap(item => item.precachePaths || [])
-            .sort((a, b) => a.localeCompare(b))
+          ...env.cache.getItemsPrecachePaths(),
         ]
       }))
       .then(() => self.log('installed'))

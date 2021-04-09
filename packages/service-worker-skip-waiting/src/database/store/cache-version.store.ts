@@ -80,8 +80,8 @@ export class CacheVersionStore implements IDatabaseStore<string> {
     return count;
   }
 
-  async searchForPredefinedChanged(): Promise<IChangedRecord<string>[]> {
-    this.log(`searching for predefined changed…`);
+  async findPredefinedChanged(): Promise<IChangedRecord<string>[]> {
+    this.log(`finding predefined changed…`);
     const result: IChangedRecord<string>[] = [];
     const items = this.controlledItems();
     for (let i = 0; i < items.length; i++) {

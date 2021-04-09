@@ -51,7 +51,7 @@ export interface IDatabaseStore<TValue = any> {
    * Хранилище может быть способно проверить актуальность своих предопределенных записей
    * по сравнению с теми же, что хранятся в источнике(например, на сервере).
    */
-  searchForPredefinedChanged(): Promise<IChangedRecord<TValue>[]>;
+  findPredefinedChanged(): Promise<IChangedRecord<TValue>[]>;
 
 }
 
@@ -82,7 +82,7 @@ export interface ICacheItemOptions {
     fetchPath?: string; // путь до сервиса на сервере, если версию кеша надо получать с сервера
   }
   match: ICacheItemMatchOptions;
-  precachePaths?: string[];
+  precachePaths?: string[]; // иногда пути для прекеша удобно определить здесь
 }
 
 export interface ICacheItemMatchOptions {
