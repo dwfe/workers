@@ -31,10 +31,10 @@
 
     function updateSwCaches() {
       sendToServiceWorker('UPDATE_CACHES');
-      console.log(`sw[main] update caches`);
     }
 
     function sendToServiceWorker(type, data) {
+      console.log(`sw[main] send ${type}`);
       navigator.serviceWorker.controller?.postMessage({type, data})
     }
 
@@ -44,7 +44,7 @@
         checkForUpdateSw();
         setTimeout(() => {
           updateSwCaches();
-        }, 60_000 * 10) // обновление sw более приоритетная задача
+        }, 60_000 * 10) // обновление sw в том числе обновляет кеши, поэтому оно более приоритетно
       }
     }, 60_000 * 60);
 

@@ -1,13 +1,14 @@
 declare const self: IServiceWorkerGlobalScope;
-import {ICacheCleaner, ICacheContainer, ICacheItemOptions, ICacheOptions, IFetchData, IPrecache, TCacheCleanStrategy, TGetStrategy} from '../сontract';
+import {ICacheCleaner, ICacheContainer, ICacheOptions, IFetchData, TCacheCleanStrategy, TGetStrategy} from '../сontract';
 import {IServiceWorkerGlobalScope} from '../../types';
 import {CacheContainer} from './cache.container';
-import {Resource} from '../resource/resource';
 import {CacheCleaner} from './cache.cleaner';
 import {CacheItem} from './item/cache.item';
+import {Precache} from './pre-cache';
 
 export class Cache {
   private container!: ICacheContainer;
+  public precache!: Precache;
   private cleaner!: ICacheCleaner;
   public isReady = false;
 
@@ -26,10 +27,11 @@ export class Cache {
 
     this.container = new CacheContainer(this.options.items);
     await this.container.init();
+    this.precache = new Precache(this);
     this.cleaner = new CacheCleaner(this);
 
     this.isReady = true;
-    self.log(` - cache is running: ${this.items().map(item => item.cacheName.value).join(', ')}`);
+    self.log(` - cache is running: ${this.items().map(item => item.cacheName.value).sort((a, b) => a.localeCompare(b)).join(', ')}`);
   }
 
   get controlExtentions(): string[] {
@@ -61,60 +63,6 @@ export class Cache {
     const item = this.item(data.url);
     return item.getByStrategy(strategy, data);
   }
-
-
-//region Pre-cache
-
-  async precache(data: IPrecache): Promise<void> {
-    if (!data.paths.length) return;
-    const {strategy, paths, throwError, timeout} = data;
-    self.log(`pre-cache [${paths.length}] files by strategy '${strategy}'`);
-
-    const queue = paths.map(path => Resource.fetchData(path, timeout));
-
-    /**
-     * Для прекеша главное не скорость скачивания, а надежность.
-     * Поэтому очередь обрабатывается последовательно.
-     */
-    for (let i = 0; i < queue.length; i++) {
-      const data = queue[i];
-      try {
-        await this.get(strategy, data);
-      } catch (err) {
-        const errMassage = `can't pre-cache '${Resource.path(data.url)}', ${err.message}`;
-        if (throwError) throw new Error('sw ' + errMassage);
-        self.logError(errMassage);
-      }
-    }
-    self.log('pre-cache complete');
-  }
-
-  async precacheExactItem(strategy: TGetStrategy, title: string, version: string): Promise<void> {
-    const options = this.options.items.find(item => item.title === title) as ICacheItemOptions;
-    const paths = options?.precachePaths;
-    if (!paths || paths.length === 0)
-      return;
-    const item = CacheItem.of(title, version, {match: options.match});
-    self.log(`pre-cache ${item.cacheName.value}, [${paths.length}] files by strategy '${strategy}'`);
-    for (const path of paths) {
-      try {
-        await item.getByStrategy(strategy, Resource.fetchData(path, 10_000));
-      } catch (err) {
-        const errMassage = `can't pre-cache '${path}', ${err.message}`;
-        self.logError(errMassage);
-      }
-    }
-    self.log('pre-cache complete');
-  }
-
-  getItemsPrecachePaths(): string[] {
-    return this.options.items
-      .flatMap(item => item.precachePaths || [])
-      .sort((a, b) => a.localeCompare(b));
-  }
-
-//endregion
-
 
   clean(strategy: TCacheCleanStrategy): Promise<void> {
     return this.cleaner.clean(strategy);

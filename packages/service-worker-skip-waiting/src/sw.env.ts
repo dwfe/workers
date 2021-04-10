@@ -79,24 +79,32 @@ export class SwEnv {
       if (predefinedChanged.length === 0)
         return;
       self.log('updating caches…');
-      for (let i = 0; i < predefinedChanged.length; i++) {
-        const {key, sourceValue} = predefinedChanged[i];
-        await this.cache.precacheExactItem('fetch -> cache', key as string, sourceValue);
+      for (const changed of predefinedChanged) {
+        await this.cache.precache.predefinedPaths({
+          strategy: 'fetch -> cache',
+          title: changed.key as string,
+          version: changed.sourceValue,
+          timeout: 10_000,
+          throwError: false,
+        });
       }
       await this.updateCacheVersions();
       /**
        * Начиная с этого момента браузер навсегда забыл о старых кешах.
+       * Теперь ничто не должно помешать отправить клиентам сигнал RELOAD_PAGE.
        */
       try {
-        await this.cache.clean('delete-uncontrolled'); // значит можно почистить кеш
-        self.log('updating caches complete');
-      } catch (ignored) {
+        await this.cache.clean('delete-uncontrolled');
+      } catch (e) {
+        self.logError(e.message);
       }
+      self.log('updating caches complete');
       this.exchange.send('RELOAD_PAGE'); // запустить новые версии кешей на клиентах
     } catch (err) {
-      self.logError(`updating caches: ${err.message}`);
+      self.logError(`updating caches: ${err.message || ''}`);
+    } finally {
+      this.updateCachesLock = false;
     }
-    this.updateCachesLock = false;
   }
 
 //endregion

@@ -21,7 +21,11 @@ const env = new SwEnv('/', {
           order: 100, // все подконтрольные файлы, что не попадают в свои кеши(фильтр по pathStart), попадают в кеш 'root'
           pathStart: '/',
           useInCacheControl: false
-        }
+        },
+        precachePaths: [
+          '/index.html',
+          '/manifest.json',
+        ],
       },
       {
         title: 'static',
@@ -87,7 +91,7 @@ const env = new SwEnv('/', {
           pathStart: '/tiles',
           useInCacheControl: true
         }
-      }
+      },
     ],
   }
 });
@@ -100,15 +104,11 @@ self.addEventListener('install', event => {
     env.waitForReady() // ожидание инициализации ТЕКУЩЕЙ(ранее установленной) версии sw, либо первичной инициализации sw (перед первой установкой)
       .then(() => self.log('installing…')) // начинается установка НОВОЙ версии sw
       .then(() => env.updateCacheVersions())
-      .then(() => env.cache.precache({
+      .then(() => env.cache.precache.run({
         strategy: 'fetch -> cache',
-        throwError: true,
+        paths: [...env.cache.precache.getItemsPrecachePaths()],
         timeout: 10_000,
-        paths: [
-          '/index.html',
-          '/manifest.json',
-          ...env.cache.getItemsPrecachePaths(),
-        ]
+        throwError: true,
       }))
       .then(() => self.log('installed'))
   );

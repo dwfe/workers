@@ -58,9 +58,8 @@ export class DatabaseController {
 
   async restoreContent(): Promise<void> {
     const stores = this.getStores();
-    for (let i = 0; i < stores.length; i++) {
-      await stores[i].restorePredefined();
-    }
+    for (const store of stores)
+      await store.restorePredefined();
   }
 
 

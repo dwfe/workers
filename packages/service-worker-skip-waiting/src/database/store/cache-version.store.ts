@@ -48,8 +48,7 @@ export class CacheVersionStore implements IDatabaseStore<string> {
     this.log(`updating predefined records…`)
     let count = 0;
     const items = this.controlledItems();
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+    for (const item of items) {
       const {title} = item;
       const version = await this.get(title);
       const serverVersion = await this.getVersionFromServer(item);
@@ -66,8 +65,7 @@ export class CacheVersionStore implements IDatabaseStore<string> {
     this.log(`restoring predefined records…`)
     let count = 0;
     const items = this.controlledItems();
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+    for (const item of items) {
       const {title} = item;
       const version = await this.get(title);
       if (version === undefined) {
@@ -84,8 +82,7 @@ export class CacheVersionStore implements IDatabaseStore<string> {
     this.log(`finding predefined changed…`);
     const result: IChangedRecord<string>[] = [];
     const items = this.controlledItems();
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+    for (const item of items) {
       const {title} = item;
       const version = await this.get(title);
       const serverVersion = await this.getVersionFromServer(item);
@@ -106,6 +103,14 @@ export class CacheVersionStore implements IDatabaseStore<string> {
     try {
       const data = Resource.fetchData(path, 10_000, noStoreRequestInit);
       const resp = await self.env.resource.fetchStrict(data);
+      // const contentType = await resp.headers.get('content-type');
+      // if (contentType.includes('html')) {
+      //   /**
+      //    * Сервер вместо ошибки может вернуть 200+html с описанием ошибки.
+      //    * В таком случае название кеша примет такой вид, что его станет невозможно удалить программно.
+      //    */
+      //   throw new Error(`content-type '${contentType}'`);
+      // }
       const version = await resp.text();
       return version.trim();
     } catch (err) {

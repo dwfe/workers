@@ -59,9 +59,9 @@ export interface IChangedRecord<TValue = any> {
 
   key: IDBValidKey;
 
-  value?: TValue;
+  value?: TValue;      // текущее значение в IndexedDB
 
-  sourceValue: TValue;
+  sourceValue: TValue; // значение в источнике
 
 }
 
@@ -152,6 +152,18 @@ export interface CacheItemOptions {
 export interface IPrecache {
   strategy: TGetStrategy;
   paths: string[]; // список путей в пределах origin sw, например: "/worker.js", "fonts/times.woff2"
+  timeout?: number; // для каждого path
+  throwError?: boolean; // надо ли делать throw Error при ошибке, либо просто залогировать ее
+}
+
+export interface IPrecacheItem extends IPrecache {
+  item: CacheItem;
+}
+
+export interface IPrecachePredefinedPaths {
+  strategy: TGetStrategy;
+  title: string; // название кеша
+  version: string; // версия кеша
   timeout?: number; // для каждого path
   throwError?: boolean; // надо ли делать throw Error при ошибке, либо просто залогировать ее
 }

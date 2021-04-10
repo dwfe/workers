@@ -13,10 +13,8 @@ export class CacheContainer implements ICacheContainer {
   }
 
   async init(): Promise<void> {
-    for (let i = 0; i < this.itemsOpt.length; i++) {
-      const dto = this.itemsOpt[i];
+    for (const dto of this.itemsOpt) {
       const {title, match} = dto;
-
       /**
        * Действия для получения версии кеша:
        *   1) взять значение из поля itemOption.version.value
