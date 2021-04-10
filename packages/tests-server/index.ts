@@ -1,14 +1,15 @@
 import * as express from 'express'
-import * as path from 'path'
+import {resolve, join} from 'path'
 import * as fs from 'fs'
 import * as cors from 'cors'
 import * as bodyParser from 'body-parser'
 import * as uaParser from 'ua-parser-js'
 import { log } from './src/common'
 
-const SRC = path.resolve(__dirname, 'src')
-const STATIC = path.resolve('../tests-sw-cache-skip-waiting/build')
-// const STATIC = path.resolve('../tests-sw-fetch-is-not-limited-by-scope')
+const SRC = resolve(__dirname, 'src')
+const STATIC = resolve('../tests-sw-fetch-is-not-limited-by-scope')
+// const STATIC = resolve('../tests-sw-cache-skip-waiting/build')
+// const STATIC = resolve('.')
 
 const textParser = bodyParser.text()
 const port = 2020
@@ -25,7 +26,7 @@ app.set('etag', false)
 app.use(express.static(STATIC))
 
 app.get('/', (req, res) => {
-  const body = fs.readFileSync(path.join(STATIC, 'index.html'))
+  const body = fs.readFileSync(join(STATIC, 'index.html'))
   res.send(body)
 })
 
@@ -33,13 +34,16 @@ app.get('/', (req, res) => {
 //   const body = fs.readFileSync(path.join(STATIC, 'banana', 'index.html'))
 //   res.send(body)
 // })
-
 // app.get('/version/app', (req, res) => {
 //   res.send('32.0.438')
 // })
-//
 // app.get('/version/tiles', (req, res) => {
 //   res.send('0')
+// })
+
+// app.get('/version/:id', (req, res) => {
+//   const body = fs.readFileSync(join(STATIC, 'version', req.params.id))
+//   res.send(body)
 // })
 
 app.listen(port, () => {
