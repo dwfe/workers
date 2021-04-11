@@ -81,7 +81,7 @@ export class Resource {
 
 //region Получить ресурс, когда его запрашивает браузер
 
-  async forBrowser(req: Request): Promise<Response | undefined> {
+  forBrowser(req: Request): Promise<Response | undefined> {
     const {strategy, data} = this.browserFetchData(req);
     return strategy === 'fetch'
       ? this.fetch(data)
