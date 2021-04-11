@@ -53,8 +53,8 @@ export class CacheItem {
    *   = найдено -> отдать браузеру
    *   = не найдено -> запросить сервер -> сохранить в кеш -> отдать браузеру
    */
-  async getByStrategy1(data: IFetchData): Promise<Response | undefined> {
-    return await this.get(data) || this.fetchThenCache(data);
+  getByStrategy1(data: IFetchData): Promise<Response | undefined> {
+    return this.get(data) || this.fetchThenCache(data);
   }
 
   /**
@@ -66,7 +66,7 @@ export class CacheItem {
    */
   async getByStrategy2(data: IFetchData): Promise<Response> {
     try {
-      return await this.fetchThenCache(data);
+      return this.fetchThenCache(data);
     } catch (ignored) {
     }
     const resp = await this.get(data);
@@ -80,8 +80,8 @@ export class CacheItem {
    *   = success -> отдать браузеру + кешировать
    *   = error -> выбросить ошибку
    */
-  async getByStrategy3(data: IFetchData): Promise<Response> {
-    return await this.fetchThenCache(data);
+  getByStrategy3(data: IFetchData): Promise<Response> {
+    return this.fetchThenCache(data);
   }
 
 
